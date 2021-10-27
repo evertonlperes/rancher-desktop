@@ -24,10 +24,9 @@ jobs:
       uses: codecov/codecov-action@v2
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        directory: ./coverage/coverate-jest/
+        directory: ./coverage/coverage-jest
         fail_ci_if_error: true
-        files: ./clover.xml
+        files: ./coverage/coverage-jest/coverage-final.json
         flags: unit-tests
         name: rancher-desktop
-        path_to_write_report: ./coverage/codecov_report.txt
         verbose: true
