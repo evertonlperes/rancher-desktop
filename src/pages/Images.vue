@@ -1,7 +1,9 @@
 <template>
   <div>
+    <nuxt-child />
     <Images
       class="content"
+      data-test="imagesTable"
       :images="images"
       :image-namespaces="imageNamespaces"
       :state="state"
@@ -43,7 +45,10 @@ export default {
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('images.title') }
+      {
+        title:  this.t('images.title'),
+        action: 'images-button-add'
+      }
     );
     ipcRenderer.on('images-changed', (event, images) => {
       this.$data.images = images;
@@ -63,6 +68,7 @@ export default {
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
       this.$data.settings = settings;
+      this.checkSelectedNamespace();
     });
     (async() => {
       this.$data.images = await ipcRenderer.invoke('images-mounted', true);
@@ -72,15 +78,28 @@ export default {
     })();
     ipcRenderer.on('images-namespaces', (event, namespaces) => {
       this.$data.imageNamespaces = namespaces;
+      this.checkSelectedNamespace();
     });
     ipcRenderer.send('images-namespaces-read');
   },
-
   beforeDestroy() {
     ipcRenderer.invoke('images-mounted', false);
   },
 
   methods: {
+    checkSelectedNamespace() {
+      if (this.imageNamespaces.length === 0) {
+        // Nothing to verify yet
+        return;
+      }
+      if (!this.imageNamespaces.includes(this.settings.images.namespace)) {
+        const K8S_NAMESPACE = 'k8s.io';
+        const defaultNamespace = this.imageNamespaces.includes(K8S_NAMESPACE) ? K8S_NAMESPACE : this.imageNamespaces[0];
+
+        ipcRenderer.invoke('settings-write',
+          { images: { namespace: defaultNamespace } } );
+      }
+    },
     onShowAllImagesChanged(value) {
       if (value !== this.settings.images.showAll) {
         ipcRenderer.invoke('settings-write',

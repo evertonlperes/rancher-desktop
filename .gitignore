@@ -1,9 +1,8 @@
 /node_modules/
 .DS_Store
+.vscode
 /resources/darwin/
-/resources/linux/*
-!/resources/linux/misc/*.in
-!/resources/linux/misc/*.desktop
+/resources/linux/
 /resources/win32/
 /coverage/
 /dist/**
@@ -12,3 +11,5 @@
 /src/node_modules/
 *~
 \#*
+*.log
+*.png

@@ -45,7 +45,7 @@ export default {
       return this.makeMarks(this.safeMinMemory, this.availMemoryInGB);
     },
     CPUMarks() {
-      return this.makeMarks(this.safeMinCPUs, this.availNumCPUs);
+      return this.makeMarks(this.safeMinCPUs, this.availNumCPUs, 2);
     },
     disableMemory() {
       return this.availMemoryInGB <= this.minMemoryInGB;
@@ -68,6 +68,9 @@ export default {
         return this.memoryInGB;
       }
     },
+    safeReservedMemoryInGB() {
+      return Math.min(this.reservedMemoryInGB, this.availMemoryInGB - this.safeMinMemory);
+    },
     safeCPUs() {
       if (this.numberCPUs < this.safeMinCPUs) {
         return this.safeMinCPUs;
@@ -81,11 +84,11 @@ export default {
   methods: {
     processMemory() {
       // The values here seem to always be in percentage.
-      const percent = x => (x - this.minMemoryInGB) * 100 / (this.availMemoryInGB - this.minMemoryInGB);
+      const percent = x => (x - this.safeMinMemory) * 100 / (this.availMemoryInGB - this.safeMinMemory);
 
       return [
         [
-          percent(Math.max(0, this.availMemoryInGB - this.reservedMemoryInGB)),
+          percent(this.availMemoryInGB - this.safeReservedMemoryInGB),
           percent(this.availMemoryInGB),
           {},
         ],
@@ -105,7 +108,7 @@ export default {
     updatedMemory(value) {
       let warningMessage = '';
 
-      if (value > this.availMemoryInGB - this.reservedMemoryInGB) {
+      if (value > this.availMemoryInGB - this.safeReservedMemoryInGB) {
         warningMessage = `Allocating ${ value } GB to the virtual machine may cause your host machine to be sluggish.`;
       }
       this.$emit('warning', 'memory', warningMessage);
@@ -120,25 +123,23 @@ export default {
       this.$emit('warning', 'cpu', warningMessage);
       this.$emit('updateCPU', value);
     },
-    makeMarks(min, max) {
-      const size = max - min + 1;
+    makeMarks(min, max, mult = 8, steps = 8) {
+      const marks = [...Array(Math.floor(max / mult))]
+        .map((_x, i) => (i + 1) * mult);
 
-      if (size <= 0) {
-        return [max];
+      if (!marks.includes(min)) {
+        marks.unshift(min);
       }
-      // Have up to 8 marks, at some integral step interval
-      const step = Math.ceil((max - min + 1) / 8);
-      const marks = [...Array(size)]
-        .map((v, i) => (i * step + min))
-        .filter(i => i <= max);
 
-      // Ensure that the last mark is the maximum value
-      if (marks.slice(-1).pop() !== max) {
+      if (!marks.includes(max)) {
         marks.push(max);
       }
 
-      return marks;
-    },
+      const step = Math.ceil((marks.length - min) / steps);
+
+      return marks
+        .filter((_val, i, arr) => i === 0 || i === arr.length - 1 || !(i % step));
+    }
   },
 };
 </script>
