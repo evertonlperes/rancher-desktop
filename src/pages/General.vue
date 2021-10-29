@@ -42,7 +42,7 @@ export default {
   data() {
     return {
       /** @type Settings */
-      settings:    settings.defaultConfig, //ipcRenderer.sendSync('settings-read'),
+      settings:    settings.defaultConfig, // ipcRenderer.sendSync('settings-read'),
       /** @type import('@/main/update').UpdateState | null */
       updateState: null,
       /** @type string */
@@ -62,7 +62,7 @@ export default {
     ipcRenderer.on('update-state', this.onUpdateState);
     ipcRenderer.send('update-state');
     try {
-      this.$data.version = await ipcRenderer.invoke('settings-read');
+      this.$data.settings = await ipcRenderer.invoke('settings-read');
     } catch (error) {
       console.error(`settings-read() failed with error ${ error }`);
     }
