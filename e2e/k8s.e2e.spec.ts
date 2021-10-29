@@ -72,6 +72,7 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     const title = await app.browserWindow.getTitle();
 
     expect(title).toBe('Rancher Desktop');
+    app.client.saveScreenshot('./it-01.png');
   });
 
   it('should run Kubernetes on Rancher Desktop', async() => {
@@ -88,6 +89,7 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
 
     expect(filteredOutput).toMatch(/ is running at ./);
+    app.client.saveScreenshot('./it-02.png');
   });
 
   it('should create a sample namespace', async() => {
@@ -98,6 +100,7 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
       const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
 
       expect(filteredNamespaces).toContain('rd-nginx-demo');
+      app.client.saveScreenshot('./it-03.png');
     }
   });
 
