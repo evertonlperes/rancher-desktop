@@ -37,7 +37,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         if: failure() # upload when previous step has failed
         with:
-          name: webDriverLogs_Screenshots
+          name: webDriverLogs_Screenshots_${{ matrix.os }}
           path: |
             ./wdio.log
             ./*.png 
