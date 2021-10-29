@@ -38,6 +38,8 @@ const defaultSettings = {
   updater:        true,
 };
 
+export const defaultConfig = typeof defaultSettings;
+
 export type Settings = typeof defaultSettings;
 
 let _isFirstRun = false;
