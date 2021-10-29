@@ -65,7 +65,7 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     // Wait till the window is fully loaded n till it gets the title 'Rancher Desktop'
     for (let i = 0; i < 10; i++) {
       const windowTitle = (await app.browserWindow.getTitle()).trim();
-
+      app.client.saveScreenshot('./it-01.png');
       if (windowTitle === 'Rancher Desktop') {
         break;
       }
@@ -74,13 +74,12 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     const title = await app.browserWindow.getTitle();
 
     expect(title).toBe('Rancher Desktop');
-    app.client.saveScreenshot('./it-01.png');
   });
 
   it('should run Kubernetes on Rancher Desktop', async() => {
     await app.client.waitUntilWindowLoaded();
     const progress = await app.client.$('.progress');
-
+    app.client.saveScreenshot('./it-02.png');
     // Wait for the progress bar to exist
     await progress.waitForExist({ timeout: 15_000 });
     // Wait for progress bar to disappear again
@@ -91,10 +90,11 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
 
     expect(filteredOutput).toMatch(/ is running at ./);
-    app.client.saveScreenshot('./it-02.png');
+
   });
 
   it('should create a sample namespace', async() => {
+    app.client.saveScreenshot('./it-03.png');
     try {
       await kubectl('create', 'namespace', 'rd-nginx-demo');
     } finally {
@@ -102,7 +102,7 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
       const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
 
       expect(filteredNamespaces).toContain('rd-nginx-demo');
-      app.client.saveScreenshot('./it-03.png');
+
     }
   });
 
