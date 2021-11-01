@@ -44,14 +44,11 @@ export class TestUtils {
    * Set jest command timeout based on env
    */
   public setupJestTimeout() {
-    const jestCiTimeout = 60000;
+    const jestCiTimeout = 600000;
     const jestDevTimeout = 30000;
-    const jestK8sTimeout = 600000;
 
     if (process.env.CI) {
       jest.setTimeout(jestCiTimeout);
-    } else if (process.env.K8STEST === 'rd-k8s-testing') {
-      jest.setTimeout(jestK8sTimeout);
     } else {
       jest.setTimeout(jestDevTimeout);
     }
