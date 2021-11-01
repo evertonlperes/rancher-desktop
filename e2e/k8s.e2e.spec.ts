@@ -81,7 +81,7 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
 
     app.client.saveScreenshot('./it-02.png');
     // Wait for the progress bar to exist
-    // await progress.waitForExist({ timeout: 15000 });
+    await progress.waitForExist({ timeout: 30000 });
     // Wait for progress bar to disappear again
     await progress.waitForExist({ timeout: 600000, reverse: true });
 
