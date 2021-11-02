@@ -47,12 +47,28 @@ jobs:
         run: npm run test:e2e:ci
 
       - uses: actions/upload-artifact@v2
-        if: failure() # upload when previous step has failed
+        if: ${{ matrix.os == 'macos-10.15' }}
         with:
           name: webDriverLogs_Screenshots_${{ matrix.os }}
           path: |
-            ./home/runner/.local/share/rancher-desktop/logs/
-            ./Users/runneradmin/AppData/Local/rancher-desktop/logs/
-            ./Users/runner/Library/Logs/rancher-desktop/
+            Users/runner/Library/Logs/rancher-desktop/
+            ./wdio.log
+            ./*.png
+
+      - uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'ubuntu-20.04' }}
+        with:
+          name: webDriverLogs_Screenshots_${{ matrix.os }}
+          path: |
+            home/runner/.local/share/rancher-desktop/logs/
+            ./wdio.log
+            ./*.png
+
+      - uses: actions/upload-artifact@v2
+        if: ${{ matrix.os == 'windows-2019' }}
+        with:
+          name: webDriverLogs_Screenshots_${{ matrix.os }}
+          path: |
+            Users/runneradmin/AppData/Local/rancher-desktop/logs/
             ./wdio.log
             ./*.png 
