@@ -86,6 +86,7 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     await progress.waitForExist({ timeout: 600000, reverse: true });
 
     const output = await kubectl('cluster-info');
+
     console.log('Output from cluster-info ---> ', output);
     // Filter out ANSI escape codes (colours).
     const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
@@ -99,8 +100,10 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
       await kubectl('create', 'namespace', 'rd-nginx-demo');
     } finally {
       const namespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
+
       console.log('Output from namespace ---> ', namespaces);
       const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
+
       console.log('Output from filteredNamespace ---> ', filteredNamespaces);
 
       expect(filteredNamespaces).toContain('rd-nginx-demo');
