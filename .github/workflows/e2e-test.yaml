@@ -46,7 +46,6 @@ jobs:
       - name: Run E2E Tests - ${{ matrix.os }}
         run: npm run test:e2e:ci
 
-      - name: Upload Logs - macOS
       - uses: actions/upload-artifact@v2
         if: ${{ matrix.os == 'macos-10.15' && failure() }}
         with:
@@ -56,7 +55,6 @@ jobs:
             ./wdio.log
             ./*.png
 
-      - name: Upload Logs - Linux
       - uses: actions/upload-artifact@v2
         if: ${{ matrix.os == 'ubuntu-20.04' && failure() }}
         with:
@@ -66,7 +64,6 @@ jobs:
             ./wdio.log
             ./*.png
 
-      - name: Upload Logs - Windows
       - uses: actions/upload-artifact@v2
         if: ${{ matrix.os == 'windows-2019' && failure() }}
         with:
