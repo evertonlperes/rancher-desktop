@@ -33,7 +33,7 @@ jobs:
 
       - name: Get RD Logs - Unix
         if: ${{ matrix.os == 'macos-10.15' || matrix.os == 'ubuntu-20.04' }}
-        run: printenv && echo $XDG_DATA_HOME && ls $HOME/.local/share/rancher-desktop/log && sleep 60
+        run: printenv && echo $XDG_DATA_HOME && && echo "List all logs from RD" && ls -la $HOME/.local/share/rancher-desktop/logs && sleep 60
     
       - name: Get RD Logs - Windows
         if: ${{ matrix.os == 'windows-2019' }}
