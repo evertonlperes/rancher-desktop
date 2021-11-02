@@ -9,7 +9,7 @@ export class TestUtils {
   public setUp() {
     this.app = new Application({
       path:             electronPath as any,
-      args:             ['--no-sandbox', path.join(__dirname, '../../')],
+      args:             ['--no-sandbox', '--disable-setuid-sandbox', path.join(__dirname, '../../')],
       chromeDriverArgs: [
         '--whitelisted-ips=',
         '--disable-dev-shm-usage',

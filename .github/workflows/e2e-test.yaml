@@ -31,6 +31,9 @@ jobs:
       - name: Run E2E Tests (Required First Run) - ${{ matrix.os }}
         run: npm run test:e2e:first:ci
 
+      - name: Get RD Logs
+        run: echo $XDG_DATA_HOME && ls $HOME/.local/share/rancher-desktop/log && sleep 60
+
       - name: Run E2E Tests - ${{ matrix.os }}
         run: npm run test:e2e:ci
 
@@ -39,5 +42,6 @@ jobs:
         with:
           name: webDriverLogs_Screenshots_${{ matrix.os }}
           path: |
+            ./$HOME/.local/share/rancher-desktop/log/
             ./wdio.log
             ./*.png 
