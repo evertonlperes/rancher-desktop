@@ -51,8 +51,8 @@ jobs:
         with:
           name: webDriverLogs_Screenshots_${{ matrix.os }}
           path: |
-            ./$HOME/.local/share/rancher-desktop/logs/*.log
-            ./$HOME/AppData/Local/rancher-desktop/logs/*.log
-            ./$HOME/Library/Logs/rancher-desktop/*.log
+            $HOME/.local/share/rancher-desktop/logs/*.log
+            $HOME/AppData/Local/rancher-desktop/logs/*.log
+            $HOME/Library/Logs/rancher-desktop/*.log
             ./wdio.log
             ./*.png 
