@@ -62,9 +62,9 @@ jobs:
       - name: Zipping files for artifact - Linux
         if: ${{ matrix.os == 'ubuntu-20.04' && failure() }}
         run: |
-          mkdir rd-logs/
-          cp -a /$HOME/.local/share/rancher-desktop/logs/. /rd-logs/
-          zip -r linux-Runner-Logs.zip /rd-logs/
+          sudo mkdir rd-logs/
+          sudo cp -a /$HOME/.local/share/rancher-desktop/logs/. /rd-logs/
+          sudo zip -r linux-Runner-Logs.zip /rd-logs/
 
       - name: Zipping files for artifact - Windows
         if: ${{ matrix.os == 'windows-2019' && failure() }}
