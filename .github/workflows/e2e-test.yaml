@@ -28,6 +28,10 @@ jobs:
       - name: Run Linter check
         run: npm run lint:nofix
 
+      - name: Installing WSL2
+        if: ${{ matrix.os == 'windows-2022' }}
+        run: choco --yes install wsl2
+
       - name: WSL2 Set up - Windows Only
         if: ${{ matrix.os == 'windows-2022' }}
         run: wsl --set-default-version 2
