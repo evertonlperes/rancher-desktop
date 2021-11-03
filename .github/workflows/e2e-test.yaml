@@ -29,11 +29,11 @@ jobs:
         run: npm run lint:nofix
 
       - name: Windows Packages - WSL2
-        if: ${{ matrix.os == 'windows-2022' }}
+        if: ${{ matrix.os == 'windows-2019' }}
         run: choco install wsl2 --params "/Version:2 /Retry:true"
 
       - name: WSL2 Set up - Windows Only
-        if: ${{ matrix.os == 'windows-2022' }}
+        if: ${{ matrix.os == 'windows-2019' }}
         run: wsl --set-default-version 2
 
       - name: Run E2E Tests (Required First Run) - ${{ matrix.os }}
@@ -48,7 +48,7 @@ jobs:
         run: printenv && echo $HOME && echo $XDG_DATA_HOME && echo "List all logs from RD" && ls -la $HOME/.local/share/rancher-desktop/logs && sleep 60
     
       - name: Get RD Logs - Windows
-        if: ${{ matrix.os == 'windows-2022' }}
+        if: ${{ matrix.os == 'windows-2019' }}
         run: cd $HOME/AppData/Local/rancher-desktop/logs && dir && sleep 60
 
       - name: Run E2E Tests - ${{ matrix.os }}
@@ -65,7 +65,7 @@ jobs:
           zip -r linux-Runner-Logs.zip $HOME/.local/share/rancher-desktop/logs
 
       - name: Zipping files for artifact - Windows
-        if: ${{ matrix.os == 'windows-2022' && failure() }}
+        if: ${{ matrix.os == 'windows-2019' && failure() }}
         run: |
           $Source = "C:\Users\runneradmin\AppData\Local\rancher-desktop\logs"
           $Staging = "D:\a\rancher-desktop\rancher-desktop\rd-logs"
@@ -95,7 +95,7 @@ jobs:
             ./*.png
 
       - uses: actions/upload-artifact@v2
-        if: ${{ matrix.os == 'windows-2022' && failure() }}
+        if: ${{ matrix.os == 'windows-2019' && failure() }}
         with:
           name: webDriverLogs_Screenshots_${{ matrix.os }}
           path: |
