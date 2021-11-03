@@ -49,7 +49,7 @@ jobs:
     
       - name: Get RD Logs - Windows
         if: ${{ matrix.os == 'windows-2019' }}
-        run: cd $HOME/AppData/Local/rancher-desktop/logs && dir
+        run: cd $HOME/AppData/Local/rancher-desktop/logs && dir && systeminfo /fo csv | ConvertFrom-Csv | select OS*, System*, Hotfix* | Format-List
 
       - name: Run E2E Tests - ${{ matrix.os }}
         run: npm run test:e2e:ci
@@ -63,7 +63,7 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-20.04' && failure() }}
         run: |
           mkdir rd-logs/
-          cp -a $HOME/.local/share/rancher-desktop/logs/. /rd-logs/
+          cp -a /$HOME/.local/share/rancher-desktop/logs/. /rd-logs/
           zip -r linux-Runner-Logs.zip /rd-logs/
 
       - name: Zipping files for artifact - Windows
