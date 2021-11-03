@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-10.15, windows-latest, ubuntu-20.04]
+        os: [macos-10.15, windows-2022, ubuntu-20.04]
 
     name: RD E2E Test - ${{ matrix.os}}
     steps:
@@ -33,7 +33,7 @@ jobs:
 
       - name: WSL Installation check
         if: ${{ matrix.os == 'windows-latest' }}
-        run: wsl --help
+        run: wsl version && wsl --help
 
       - name: Get RD Logs - macOS
         if: ${{ matrix.os == 'macos-10.15' }}
