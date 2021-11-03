@@ -29,6 +29,10 @@ async function kubectl(...args: string[] ): Promise<string> {
   return await tool('kubectl', ...args);
 }
 
+async function nerdctl(...args: string[] ): Promise<string> {
+  return await tool('nerdctl', ...args);
+}
+
 describe('Rancher Desktop - K8s Sample Deployment Test', () => {
   let app: Application;
   let utils: TestUtils;
@@ -84,7 +88,9 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     await progress.waitForExist({ timeout: 30000 });
     // Wait for progress bar to disappear again
     await progress.waitForExist({ timeout: 600000, reverse: true });
+    const nerdctlOutput = await nerdctl('pull', 'alpine');
 
+    console.log('nerdctl Output: --> ', nerdctlOutput);
     const output = await kubectl('cluster-info');
 
     console.log('Output from cluster-info ---> ', output);
@@ -94,71 +100,71 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     expect(filteredOutput).toMatch(/ is running at ./);
   });
 
-  it('should create a sample namespace', async() => {
-    app.client.saveScreenshot('./it-03.png');
-    try {
-      await kubectl('create', 'namespace', 'rd-nginx-demo');
-    } finally {
-      const namespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
+  // it('should create a sample namespace', async() => {
+  //   app.client.saveScreenshot('./it-03.png');
+  //   try {
+  //     await kubectl('create', 'namespace', 'rd-nginx-demo');
+  //   } finally {
+  //     const namespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
 
-      console.log('Output from namespace ---> ', namespaces);
-      const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
+  //     console.log('Output from namespace ---> ', namespaces);
+  //     const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
 
-      console.log('Output from filteredNamespace ---> ', filteredNamespaces);
+  //     console.log('Output from filteredNamespace ---> ', filteredNamespaces);
 
-      expect(filteredNamespaces).toContain('rd-nginx-demo');
-    }
-  });
+  //     expect(filteredNamespaces).toContain('rd-nginx-demo');
+  //   }
+  // });
 
-  it('should deploy nginx server sample', async() => {
-    try {
-      const yamlFilePath = path.join(path.dirname(__dirname), 'e2e', 'fixtures', 'k8s-deploy-sample', 'nginx-sample-app.yaml');
+  // it('should deploy nginx server sample', async() => {
+  //   try {
+  //     const yamlFilePath = path.join(path.dirname(__dirname), 'e2e', 'fixtures', 'k8s-deploy-sample', 'nginx-sample-app.yaml');
 
-      await kubectl('apply', '-f', yamlFilePath, '-n', 'rd-nginx-demo');
+  //     await kubectl('apply', '-f', yamlFilePath, '-n', 'rd-nginx-demo');
 
-      for (let i = 0; i < 10; i++) {
-        const podName = (await kubectl('get', 'pods', '--output=name', '-n', 'rd-nginx-demo')).trim();
+  //     for (let i = 0; i < 10; i++) {
+  //       const podName = (await kubectl('get', 'pods', '--output=name', '-n', 'rd-nginx-demo')).trim();
 
-        if (podName) {
-          expect(podName).not.toBeFalsy();
-          break;
-        }
-        await util.promisify(setTimeout)(5_000);
-      }
-      await kubectl('wait', '--for=condition=ready', 'pod', '-l', 'app=nginx', '-n', 'rd-nginx-demo', '--timeout=120s');
+  //       if (podName) {
+  //         expect(podName).not.toBeFalsy();
+  //         break;
+  //       }
+  //       await util.promisify(setTimeout)(5_000);
+  //     }
+  //     await kubectl('wait', '--for=condition=ready', 'pod', '-l', 'app=nginx', '-n', 'rd-nginx-demo', '--timeout=120s');
 
-      if (os.platform().startsWith('win')) {
-        // Forward port via UI button click, and capture the port number
-        const portForwardingPage = await navBarPage.getPortForwardingPage();
-        const port = await portForwardingPage?.portForward();
+  //     if (os.platform().startsWith('win')) {
+  //       // Forward port via UI button click, and capture the port number
+  //       const portForwardingPage = await navBarPage.getPortForwardingPage();
+  //       const port = await portForwardingPage?.portForward();
 
-        // Access app and check the welcome message
-        const response = await fetch(`http://localhost:${ port }`);
+  //       // Access app and check the welcome message
+  //       const response = await fetch(`http://localhost:${ port }`);
 
-        expect(response.ok).toBeTruthy();
-        response.text().then((text) => {
-          expect(text).toContain('Welcome to nginx!');
-        });
-      } else {
-        const podName = (await kubectl('get', 'pods', '--output=name', '-n', 'rd-nginx-demo')).trim();
-        const checkAppStatus = await kubectl('exec', '-n', 'rd-nginx-demo', '-it', podName, '--', 'curl', 'localhost');
+  //       expect(response.ok).toBeTruthy();
+  //       response.text().then((text) => {
+  //         expect(text).toContain('Welcome to nginx!');
+  //       });
+  //     } else {
+  //       const podName = (await kubectl('get', 'pods', '--output=name', '-n', 'rd-nginx-demo')).trim();
+  //       const checkAppStatus = await kubectl('exec', '-n', 'rd-nginx-demo', '-it', podName, '--', 'curl', 'localhost');
 
-        expect(checkAppStatus).toBeTruthy();
-        expect(checkAppStatus).toContain('Welcome to nginx!');
-      }
-    } catch (err:any) {
-      console.error('Error: ');
-      console.error(`stdout: ${ err.stdout }`);
-      console.error(`stderr: ${ err.stderr }`);
-      throw err;
-    }
-  });
+  //       expect(checkAppStatus).toBeTruthy();
+  //       expect(checkAppStatus).toContain('Welcome to nginx!');
+  //     }
+  //   } catch (err:any) {
+  //     console.error('Error: ');
+  //     console.error(`stdout: ${ err.stdout }`);
+  //     console.error(`stderr: ${ err.stderr }`);
+  //     throw err;
+  //   }
+  // });
 
-  it('should delete sample namespace', async() => {
-    await kubectl('delete', 'namespace', 'rd-nginx-demo');
-    const namespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
-    const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
+  // it('should delete sample namespace', async() => {
+  //   await kubectl('delete', 'namespace', 'rd-nginx-demo');
+  //   const namespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
+  //   const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
 
-    expect(filteredNamespaces).not.toContain('rd-nginx-demo');
-  });
+  //   expect(filteredNamespaces).not.toContain('rd-nginx-demo');
+  // });
 });

@@ -28,13 +28,13 @@ jobs:
       - name: Run Linter check
         run: npm run lint:nofix
 
-      - name: Windows Packages - WSL2
-        if: ${{ matrix.os == 'windows-2019' }}
-        run: choco install wsl2 --params "/Version:2 /Retry:true"
+      # - name: Windows Packages - WSL2
+      #   if: ${{ matrix.os == 'windows-2019' }}
+      #   run: choco install wsl2 --params "/Version:2 /Retry:true"
 
-      - name: WSL2 Set up - Windows Only
-        if: ${{ matrix.os == 'windows-2019' }}
-        run: wsl --set-default-version 2
+      # - name: WSL2 Set up - Windows Only
+      #   if: ${{ matrix.os == 'windows-2019' }}
+      #   run: wsl --set-default-version 2
 
       - name: Run E2E Tests (Required First Run) - ${{ matrix.os }}
         run: npm run test:e2e:first:ci
