@@ -1,6 +1,7 @@
 import os from 'os';
 import path from 'path';
 import util from 'util';
+import { exec } from 'child_process';
 import fetch from 'node-fetch';
 import { Application } from 'spectron';
 import * as childProcess from '../src/utils/childProcess';
@@ -76,6 +77,11 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     }
     const title = await app.browserWindow.getTitle();
 
+    await exec('ps aux | grep rancher', (error, stdout, stderr) => {
+      console.log(error);
+      console.log(stdout);
+      console.log(stderr);
+    });
     expect(title).toBe('Rancher Desktop');
   });
 
@@ -88,6 +94,7 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     await progress.waitForExist({ timeout: 30000 });
     // Wait for progress bar to disappear again
     await progress.waitForExist({ timeout: 600000, reverse: true });
+
     const nerdctlOutput = await nerdctl('pull', 'alpine');
 
     console.log('nerdctl Output: --> ', nerdctlOutput);
