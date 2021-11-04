@@ -47,7 +47,7 @@ const UpdateStatusProps = Vue.extend({
       default: false,
     },
     updateState: {
-      type:    Object as PropType<UpdateState | null>,
+      type:    Object as PropType<UpdateState | 'not found'>,
       default: null,
     },
     version: {
