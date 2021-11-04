@@ -24,7 +24,7 @@ const { _electron: electron } = require('playwright');
   // Direct Electron console to Node terminal.
   window.on('console', console.log);
   // Click button.
-  await window.click('text=Click me');
+  await window.waitForSelector('.versionInfo');
   // Exit app.
   await electronApp.close();
 })();

@@ -2,7 +2,7 @@
 // code docs on it.
 
 import fs from 'fs';
-import os from 'os';
+import os, { type } from 'os';
 import { dirname, join } from 'path';
 
 import _ from 'lodash';
@@ -37,6 +37,8 @@ const defaultSettings = {
   /** Whether we should check for updates and apply them. */
   updater:        true,
 };
+
+export const defaultConfig = typeof defaultSettings;
 
 export type Settings = typeof defaultSettings;
 
