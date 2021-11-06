@@ -13,7 +13,7 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
   const mainTitleSelector = '[data-test="mainTitle"]';
 
   test.beforeAll(async({ browser }) => {
-    electronApp = await _electron.launch({ args: [path.join(__dirname, '../')], timeout: 100000 });
+    electronApp = await _electron.launch({ args: [path.join(__dirname, '../')] });
     const appPath = await electronApp.evaluate(async({ app }) => {
       return await app.getAppPath();
     });
@@ -28,16 +28,16 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
 
   test('should open the main app', async() => {
     app = await electronApp.firstWindow();
-    await delay(30000); // Wait a bit
     await app.waitForSelector('.progress', { state: 'visible' });
+    await delay(20000); // Wait a bit
 
     // Use it for integration tools test - wait the entire app backend being loaded.
     // const progressBarSelector = app.locator('.progress');
     // await progressBarSelector.waitFor({ state: 'detached', timeout: 60000 });
 
-    const versionApp = await app.$eval('.versionInfo', el => el.textContent);
+    // const versionApp = await app.$eval('.versionInfo', el => el.textContent);
 
-    expect(versionApp).toBe('Version: (checking...)');
+    // expect(versionApp).toBe('Version: (checking...)');
   });
 
   test('should get General page content', async() => {
