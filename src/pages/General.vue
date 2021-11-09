@@ -32,7 +32,6 @@
 <script>
 import TelemetryOptIn from '@/components/TelemetryOptIn.vue';
 import UpdateStatus from '@/components/UpdateStatus.vue';
-import * as defaultSettings from '@/config/settings';
 const { ipcRenderer } = require('electron');
 
 export default {
@@ -42,7 +41,7 @@ export default {
   data() {
     return {
       /** @type Settings */
-      settings:    defaultSettings.defaultConfig,
+      settings:    ipcRenderer.sendSync('settings-read'),
       /** @type import('@/main/update').UpdateState | null */
       updateState: null,
       /** @type string */
