@@ -30,9 +30,10 @@
 </template>
 
 <script>
+import { ipcRenderer } from 'electron';
 import TelemetryOptIn from '@/components/TelemetryOptIn.vue';
 import UpdateStatus from '@/components/UpdateStatus.vue';
-const { ipcRenderer } = require('electron');
+import { defaultSettings } from '@/config/settings';
 
 export default {
   name:       'General',
@@ -40,8 +41,7 @@ export default {
   components: { TelemetryOptIn, UpdateStatus },
   data() {
     return {
-      /** @type Settings */
-      settings:    ipcRenderer.sendSync('settings-read'),
+      settings:    defaultSettings,
       /** @type import('@/main/update').UpdateState | null */
       updateState: null,
       /** @type string */
