@@ -1,6 +1,6 @@
 import path from 'path';
 import os from 'os';
-import { ElectronApplication, _electron, Page } from 'playwright';
+import { ElectronApplication, _electron, Page, Locator } from 'playwright';
 import { test, expect } from '@playwright/test';
 
 /**
@@ -11,6 +11,7 @@ let page: Page;
 let electronApp: ElectronApplication;
 
 test.describe.serial('POC Playwright - Rancher Desktop', () => {
+  let mainTitle: Locator;
   const mainTitleSelector = '[data-test="mainTitle"]';
 
   test.beforeAll(async() => {
@@ -35,15 +36,15 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
     // const progressBarSelector = page.locator('.progress');
     // await progressBarSelector.waitFor({ state: 'detached', timeout: 60000 });
 
-    // const versionApp = await page.$eval('.versionInfo', el => el.textContent);
+    // const versionInfo = page.locator('.versionInfo');
 
-    // expect(versionApp).toBe('Version: (checking...)');
+    // await expect(versionInfo).toHaveText('Version: (checking...)');
   });
 
   test('should get General page content', async() => {
-    const generalGreetings = await page.$eval(mainTitleSelector, el => el.textContent.trim());
+    mainTitle = page.locator(mainTitleSelector);
 
-    expect(generalGreetings).toBe('Welcome to Rancher Desktop');
+    await await expect(mainTitle).toHaveText('Welcome to Rancher Desktop');
   });
 
   test('should navigate to Kubernetes Settings and check elements', async() => {
@@ -62,8 +63,8 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
     // }
 
     // Collecting data from selectors
-    const k8sVersionDnd = await page.$eval(k8sVersionDndSelector, el => el.textContent.trim());
-    const k8sSettingsTitle = await page.$eval(mainTitleSelector, el => el.textContent.trim());
+    const k8sVersionDnd = page.locator(k8sVersionDndSelector);
+    const k8sSettingsTitle = page.locator(mainTitleSelector);
     const k8sMemorySlider = page.locator(k8sMemorySliderSelector);
     const k8sCpuSlider = page.locator(k8sCpuSliderSelector);
     const k8sPort = page.locator(k8sPortSelector);
@@ -73,12 +74,12 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
 
     // await progressBarSelector.waitFor({ state: 'hidden' });
 
-    expect(k8sSettingsTitle).toBe('Kubernetes Settings');
-    expect(k8sVersionDnd).toContain('Kubernetes version');
-    expect(k8sMemorySlider).toBeVisible();
-    expect(k8sCpuSlider).toBeVisible();
-    expect(k8sPort).toBeVisible();
-    expect(k8sResetButton).toBeVisible();
+    await expect(k8sSettingsTitle).toHaveText('Kubernetes Settings');
+    await expect(k8sVersionDnd).toBeVisible();
+    await expect(k8sMemorySlider).toBeVisible();
+    await expect(k8sCpuSlider).toBeVisible();
+    await expect(k8sPort).toBeVisible();
+    await expect(k8sResetButton).toBeVisible();
   });
 
   if (os.platform().startsWith('win')) {
@@ -92,13 +93,15 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
       // } catch (err) {
       //   console.log('Error during Integrations navigation. Error --> ', err);
       // }
-      const getSupportTitle = await page.$eval(mainTitleSelector, el => el.textContent.trim());
+      const getSupportTitle = page.locator(mainTitleSelector);
 
-      expect(getSupportTitle).toContain('Supporting Utilities');
+      await expect(getSupportTitle).toHaveText('Supporting Utilities');
     });
   }
 
   test('should navigate to Images page', async() => {
+    const getSupportTitle = page.locator(mainTitleSelector);
+
     await navigateTo('Images');
     // try {
     //   await page.click(`.nav li[item="/Images"] a`);
@@ -106,13 +109,13 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
     // } catch (err) {
     //   console.log('Error during Images navigation. Error --> ', err);
     // }
-    await delay(10000);
-    const getSupportTitle = await page.$eval(mainTitleSelector, el => el.textContent.trim());
 
-    expect(getSupportTitle).toContain('Images');
+    await expect(getSupportTitle).toHaveText('Images');
   });
 
   test('should navigate to Troubleshooting and check elements', async() => {
+    const getSupportTitle = page.locator(mainTitleSelector);
+
     await navigateTo('Troubleshooting');
     // try {
     //   await page.click(`.nav li[item="/Troubleshooting"] a`);
@@ -120,12 +123,15 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
     // } catch (err) {
     //   console.log('Error during Troubleshooting navigation. Error --> ', err);
     // }
-    const getSupportTitle = await page.$eval(mainTitleSelector, el => el.textContent.trim());
 
-    expect(getSupportTitle).toContain('Troubleshooting');
+    await expect(getSupportTitle).toHaveText('Troubleshooting');
   });
 });
 
+/**
+ * Navigate to a specific tab
+ * @param path
+ */
 async function navigateTo(path: string) {
   try {
     return await Promise.all([
