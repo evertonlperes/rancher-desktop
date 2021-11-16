@@ -20,7 +20,7 @@ jobs:
     - run: npm ci
     - run: npm run lint:nofix
     - run: npm test
-    - name: Upload coverage to Codecov
+    - name: Upload Coverage
       uses: codecov/codecov-action@v2
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
