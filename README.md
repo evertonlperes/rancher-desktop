@@ -1,7 +1,8 @@
 # Rancher Desktop
 
 Rancher Desktop is an open-source project to bring Kubernetes and container management to the desktop.
-Windows and macOS versions of Rancher Desktop are available for download.
+Windows, macOS and Linux versions of Rancher Desktop are available for download, though do note that 
+the Linux version is considered a tech preview.
 
 ## Features
 
@@ -18,14 +19,14 @@ All of this is wrapped in an open-source application.
 
 ## Get The App
 
-You can download the application for macOS and Windows on the [releases page].
+You can download the application for macOS, Windows and Linux on the [releases page].
 
 [releases page]: https://github.com/rancher-sandbox/rancher-desktop/releases
 
-Running on Windows requires [Windows Subsystem for Linux (WSL)].  This will be
+Running on Windows requires [Windows Subsystem for Linux (WSL2)]. This will be
 installed automatically during Rancher Desktop installation.
 
-[Windows Subsystem for Linux (WSL)]:
+[Windows Subsystem for Linux (WSL2)]:
 https://docs.microsoft.com/en-us/windows/wsl/install-win10
 
 Note, [development builds] are available from the CI system. Development builds
@@ -33,6 +34,30 @@ are not signed.
 
 [development builds]:
 https://github.com/rancher-sandbox/rancher-desktop/actions/workflows/package.yaml?query=branch%3Amain
+
+For Linux, you will find both .DEB and .RPM packages attached as an asset for the most recent version.
+
+
+## System Requirements
+Recommended
+| **OS** | **Memory** | **CPU** |
+| :--- | :---: | :---: |
+| macOS | 8GB | 4CPU |
+| Windows | 8GB | 4CPU |
+| Linux | 8GB | 4CPU |
+
+OS versions we're currently using for development/testing:
+| **OS** | **Version**
+| :--- | :---: |
+| macOS | Catalina 10.15 or higher |
+| Windows | Home build 1909  or higher |
+| Ubuntu | Ubuntu 20.04 or higher |
+| openSUSE | Leap 15.3 or higher |
+| Fedora | Fedora 33 or higher |
+
+**Note:**
+Feel free to use a different OS version that haven't been listed.
+We are currently developing/testing Rancher Desktop on the listed OS and you can use it as a reference.
 
 ## Base Design Details
 
@@ -44,17 +69,19 @@ provide one cohesive application.
 
 ## Building The Source
 
-Rancher can be built from source on macOS or Windows.  Cross-compilation is
+Rancher can be built from source on macOS, Windows or Linux.  Cross-compilation is
 currently not supported.  The following provides some detail on building.
 
 ### Prerequisites
 
 Rancher Desktop is an [Electron] and [Node.js] application. Node.js v14 needs to
-be installed to build the source.  On Windows, [Go] is also required.
+be installed to build the source.  On Windows, [Go] is also required. On Linux,
+[QEMU] is required at runtime.
 
 [Electron]: https://www.electronjs.org/
 [Node.js]: https://nodejs.org/
 [Go]: https://golang.org/
+[QEMU]: https://www.qemu.org/
 
 #### Windows
 
@@ -102,6 +129,13 @@ npm run dev
 
 To build the distributable (application bundle on macOS, installer on Windows),
 run `npm run build`.
+
+On Linux `npm run build` produces a zip file including the built binaries. To build the 
+distributable artifacts (RPM, Deb or AppImage) the [Open Build Service] is used.
+OBS makes use of the packaging recipes under `packaging/linux` folder of this
+repository together with the zip file including all built binaries.
+
+[Open Build Service]: https://build.opensuse.org/
 
 ### How To Test
 

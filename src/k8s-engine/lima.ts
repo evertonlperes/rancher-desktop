@@ -82,6 +82,7 @@ type LimaConfiguration = {
     script: string;
     hint: string;
   }[];
+  portForwards?: Array<Record<string, any>>;
 
   // The rest of the keys are not used by lima, just state we keep with the VM.
   k3s?: {
@@ -105,7 +106,7 @@ interface LimaListResult {
 
 const console = Logging.lima;
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.1.9';
+const IMAGE_VERSION = '0.2.1';
 
 /** The root-owned directory the VDE tools are installed into. */
 const VDE_DIR = '/opt/rancher-desktop';
@@ -125,16 +126,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       this.emit('progress');
     });
 
-    // On Linux this 'process.kill(0)' is sending a TERM signal to all processes of the
-    // same session and group. On desktop environments that causes signaling
-    // gnomeshell or its equivalents causing a crash of the whole DE, beyond also killing
-    // other running applications under the same gnomeshell session.
-    // If we really need an attempt to kill errant qemu processes a different
-    // strategy is required on Linux.
-    if (!(process.env.NODE_ENV ?? '').includes('test') && !os.platform().startsWith('linux')) {
-      process.on('exit', () => {
+    if (!(process.env.NODE_ENV ?? '').includes('test')) {
+      process.on('exit', async() => {
         // Attempt to shut down any stray qemu processes.
-        process.kill(0);
+        await this.lima('stop', '--force', MACHINE_NAME);
       });
     }
   }
@@ -433,6 +428,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       k3s: { version: desiredVersion },
     });
 
+    this.updateConfigPortForwards(config);
     if (currentConfig) {
       // update existing configuration
       const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
@@ -451,6 +447,28 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
       }
     }
+  }
+
+  protected updateConfigPortForwards(config: LimaConfiguration) {
+    let allPortForwards: Array<Record<string, any>> | undefined = config.portForwards;
+
+    if (!allPortForwards) {
+      // This shouldn't happen, but fix it anyway
+      config.portForwards = allPortForwards = DEFAULT_CONFIG.portForwards ?? [];
+    }
+    const dockerPortForwards = allPortForwards?.find(entry => Object.keys(entry).length === 2 &&
+      entry.guestSocket === '/var/run/docker.sock');
+
+    if (!dockerPortForwards) {
+      config.portForwards?.push({
+        guestSocket: '/var/run/docker.sock',
+        hostSocket:  'docker',
+      });
+    } else if (dockerPortForwards.hostSocket !== 'docker') {
+      dockerPortForwards.hostSocket = 'docker';
+    }
+
+    return config;
   }
 
   protected get currentConfig(): Promise<LimaConfiguration | undefined> {
@@ -858,13 +876,24 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           }),
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
-          this.progressTracker.action('Installing tools', 30, this.installVDETools()),
         ]);
+
+        if (os.platform() === 'darwin') {
+          await this.progressTracker.action('Installing tools', 30, this.installVDETools());
+        }
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted
           return;
         }
+
+        await this.progressTracker.action('Starting docker server', 30, async() => {
+          await this.ssh('sudo', '/sbin/rc-service', 'docker', 'start');
+          this.ssh('sudo', 'sh', '-c',
+            'while [ ! -S /var/run/docker.sock ] ; do sleep 1 ; done; chmod a+rw /var/run/docker.sock').catch((err) => {
+            console.log('Error trying to chmod /var/run/docker.sock: ', err);
+          });
+        });
 
         await this.progressTracker.action('Starting k3s', 100, async() => {
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
@@ -985,6 +1014,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       return;
     }
     this.currentAction = Action.STOPPING;
+    await this.progressTracker.action('Stopping docker server', 30, async() => {
+      try {
+        await this.ssh('sudo', '/sbin/rc-service', 'docker', 'stop');
+      } catch (ex) {
+        console.log(`Error stopping docker: `, ex);
+      }
+    });
     await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
       try {
         this.setState(K8s.State.STOPPING);
