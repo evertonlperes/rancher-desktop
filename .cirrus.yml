@@ -1,8 +1,8 @@
 task:
-  timeout_in: 30m
+  timeout_in: 30
   container:
     image: ubuntu:20.04
-    kvm: true
+    kvm: 'true'
     cpu: 4
     memory: 16G
 
