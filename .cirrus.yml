@@ -10,6 +10,7 @@ task:
     - apt-get update
     - apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo
     - curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
+    - apt-get install -y xvfb
 
   node_modules_cache:
     folder: node_modules
