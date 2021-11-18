@@ -1,16 +1,18 @@
 task:
+  name: RD E2E/Integration tests
   timeout_in: 30
   container:
     image: ubuntu:20.04
     kvm: 'true'
-    cpu: 4
+    cpu: 6
     memory: 16G
 
   install_deps_script:
     - apt-get update
     - apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo
     - curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
-    - apt-get install -y xvfb
+    - apt-get install -y xvfb libxtst6 libxss1 libgtk2.0-0
+    - apt-get install -y libnss3 libasound2 libgconf-2-4
 
   node_modules_cache:
     folder: node_modules
