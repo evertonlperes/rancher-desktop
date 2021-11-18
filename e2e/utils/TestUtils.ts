@@ -44,7 +44,7 @@ export class TestUtils {
    * Set jest command timeout based on env
    */
   public setupJestTimeout() {
-    const jestCiTimeout = 600000;
+    const jestCiTimeout = 360000;
     const jestDevTimeout = 90000;
 
     if (process.env.CI) {
