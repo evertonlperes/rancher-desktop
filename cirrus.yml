@@ -1,0 +1,17 @@
+task:
+  timeout_in: 30m
+  container:
+    image: ubuntu:20.04
+    kvm: true
+    cpu: 4
+    memory: 16G
+
+  install_deps_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends ca-certificates curl git golang openssh-client make netcat sudo
+
+  node_modules_cache:
+    folder: node_modules
+    fingerprint_script: cat package-lock.json
+    populate_script: npm ci
+    test_script: npm run test:e2e:ci
