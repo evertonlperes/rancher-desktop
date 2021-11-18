@@ -87,7 +87,7 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     // Wait for progress bar to disappear again
     await progress.waitForExist({ timeout: 360000, reverse: true });
 
-    const k8sVersion = await kubectl('verson');
+    const k8sVersion = await kubectl('version');
 
     console.log('Checking k8s version cli and server ---> ', k8sVersion);
 
