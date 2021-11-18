@@ -6,7 +6,7 @@ const electronPath = require('electron');
 export class TestUtils {
   public app: Application | undefined;
 
-  public setUp() {
+  public async setUp() {
     this.app = new Application({
       path:             electronPath as any,
       args:             ['--no-sandbox', '--disable-setuid-sandbox', path.join(__dirname, '../../')],
@@ -15,10 +15,11 @@ export class TestUtils {
         '--disable-dev-shm-usage',
       ],
       connectionRetryTimeout: 60_000,
-      webdriverLogPath:       './'
+      webdriverLogPath:       './',
+      chromeDriverLogPath:    './chromedriver.log'
     });
 
-    return this.app.start();
+    return await this.app.start();
   }
 
   /**
@@ -44,7 +45,7 @@ export class TestUtils {
    */
   public setupJestTimeout() {
     const jestCiTimeout = 600000;
-    const jestDevTimeout = 30000;
+    const jestDevTimeout = 90000;
 
     if (process.env.CI) {
       jest.setTimeout(jestCiTimeout);

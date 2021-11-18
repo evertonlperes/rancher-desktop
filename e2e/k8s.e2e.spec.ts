@@ -30,10 +30,6 @@ async function kubectl(...args: string[] ): Promise<string> {
   return await tool('kubectl', ...args);
 }
 
-async function nerdctl(...args: string[] ): Promise<string> {
-  return await tool('nerdctl', ...args);
-}
-
 describe('Rancher Desktop - K8s Sample Deployment Test', () => {
   let app: Application;
   let utils: TestUtils;
@@ -77,11 +73,6 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     }
     const title = await app.browserWindow.getTitle();
 
-    await exec('ps aux | grep rancher', (error, stdout, stderr) => {
-      console.log(error);
-      console.log(stdout);
-      console.log(stderr);
-    });
     expect(title).toBe('Rancher Desktop');
   });
 
@@ -89,18 +80,16 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     await app.client.waitUntilWindowLoaded();
     const progress = await app.client.$('.progress');
 
+    // Delete this debug entry
     app.client.saveScreenshot('./it-02.png');
     // Wait for the progress bar to exist
     await progress.waitForExist({ timeout: 30000 });
     // Wait for progress bar to disappear again
     await progress.waitForExist({ timeout: 600000, reverse: true });
 
-    const nerdctlOutput = await nerdctl('pull', 'alpine');
-
-    console.log('nerdctl Output: --> ', nerdctlOutput);
     const output = await kubectl('cluster-info');
 
-    console.log('Output from cluster-info ---> ', output);
+    console.error('Output from cluster-info ---> ', output);
     // Filter out ANSI escape codes (colours).
     const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
 
@@ -109,15 +98,23 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
 
   it('should create a sample namespace', async() => {
     app.client.saveScreenshot('./it-03.png');
+
     try {
-      await kubectl('create', 'namespace', 'rd-nginx-demo');
+      // required if you're testing it locally
+      const getExistingNs = (await kubectl('get', 'namespace', '--output=name')).trim();
+
+      if (getExistingNs.includes('rd-nginx-demo')) {
+        const deleteExistingNs = await kubectl('delete', 'ns', 'rd-nginx-demo');
+
+        console.log('Results from Delete NS--> ', deleteExistingNs);
+      }
+      const createNs = await kubectl('create', 'namespace', 'rd-nginx-demo');
+
+      console.log('Create NS log --> ', createNs);
     } finally {
       const namespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
 
-      console.log('Output from namespace ---> ', namespaces);
       const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
-
-      console.log('Output from filteredNamespace ---> ', filteredNamespaces);
 
       expect(filteredNamespaces).toContain('rd-nginx-demo');
     }
@@ -127,19 +124,22 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     try {
       const yamlFilePath = path.join(path.dirname(__dirname), 'e2e', 'fixtures', 'k8s-deploy-sample', 'nginx-sample-app.yaml');
 
-      await kubectl('apply', '-f', yamlFilePath, '-n', 'rd-nginx-demo');
-
+      const applyTemplate = await kubectl('apply', '-f', yamlFilePath, '-n', 'rd-nginx-demo');
+      console.log('Results apply template ---> ', applyTemplate);
       for (let i = 0; i < 10; i++) {
         const podName = (await kubectl('get', 'pods', '--output=name', '-n', 'rd-nginx-demo')).trim();
 
+        //Delete this console error
+        console.error('podName --> ', podName);
         if (podName) {
           expect(podName).not.toBeFalsy();
           break;
         }
         await util.promisify(setTimeout)(5_000);
       }
-      await kubectl('wait', '--for=condition=ready', 'pod', '-l', 'app=nginx', '-n', 'rd-nginx-demo', '--timeout=120s');
+      const waitDeploy = await kubectl('wait', '--for=condition=ready', 'pod', '-l', 'app=nginx', '-n', 'rd-nginx-demo', '--timeout=120s');
 
+      console.error('WaitDeploy: --> ', waitDeploy);
       if (os.platform().startsWith('win')) {
         // Forward port via UI button click, and capture the port number
         const portForwardingPage = await navBarPage.getPortForwardingPage();
