@@ -9,10 +9,13 @@ task:
 
   install_deps_script:
     - apt-get update
-    - apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo
+    - apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo xvfb
     - curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
-    - apt-get install -y xvfb libxtst6 libxss1 libgtk2.0-0
-    - apt-get install -y libnss3 libasound2 libgconf-2-4
+
+  before_script: # starging xvfb server
+    - "export DISPLAY=:99.0"
+    - "sh -e /etc/init.d/xvfb start"
+    - sleep 5
 
   node_modules_cache:
     folder: node_modules
