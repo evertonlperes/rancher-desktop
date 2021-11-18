@@ -15,4 +15,4 @@ task:
     folder: node_modules
     fingerprint_script: cat package-lock.json
     populate_script: npm ci
-    test_script: npm run test:e2e:ci
+  test_script: npm run test:e2e:ci
