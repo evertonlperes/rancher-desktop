@@ -8,7 +8,7 @@ task:
 
   install_deps_script:
     - apt-get update
-    - apt-get install -y --no-install-recommends ca-certificates curl git golang openssh-client make netcat sudo
+    - apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo
     - curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs npm && node --version && npm -v
 
   node_modules_cache:
