@@ -54,7 +54,7 @@ task:
       install_deps_script: |
         brew update
         brew install node@16
-        brew list node
+        node -v && npm -v
 
   node_modules_cache:
     folder: node_modules
