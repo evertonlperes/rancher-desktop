@@ -7,13 +7,17 @@ task:
     cpu: 6
     memory: 16G
 
+  before_script:
+    - export DISPLAY=':99.0'
+    - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
   install_deps_script:
     - apt-get update
     - apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo xvfb
     - curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
+    - ps -ef | grep Xvfb
 
   node_modules_cache:
     folder: node_modules
     fingerprint_script: cat package-lock.json
-    populate_script: npm ci
-  test_script: xvfb-run --auto-servernum npm run test:e2e
+    populate_script: npm install
+  test_script: npm run test:e2e:ci
