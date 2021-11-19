@@ -6,6 +6,8 @@ task:
     kvm: 'true'
     cpu: 4
     memory: 8G
+  env:
+    DEBIAN_FRONTEND: noninteractive
 
   install_deps_script: |
     apt-get update
