@@ -26,28 +26,26 @@
 task:
   # trigger_type: manual
   matrix:
-    # - name: Linux - RD E2E/Integration Tests
-    #   timeout_in: 30
-    #   container:
-    #     image: ubuntu:20.04
-    #     kvm: 'true'
-    #     cpu: 4
-    #     memory: 8G
-    #   env:
-    #     DEBIAN_FRONTEND: noninteractive 
-
-    #   install_deps_script: |
-    #     apt-get update
-    #     apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo
-    #     curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
-    #     apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+    - name: Linux - RD E2E/Integration Tests
+      timeout_in: 30
+      container:
+        image: ubuntu:20.04
+        kvm: 'true'
+        cpu: 4
+        memory: 8G
+      env:
+        DEBIAN_FRONTEND: noninteractive 
+      install_deps_script: |
+        apt-get update
+        apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo
+        curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
+        apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
 
     - name: macOS - RD E2E/Integration Tests
       timeout_in: 30
       osx_instance:
         image: big-sur-base
         kvm: 'true'
-
       install_deps_script: |
         brew install node && brew doctor
         node -v && npm -v
