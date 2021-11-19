@@ -43,7 +43,7 @@ task:
 
     - name: macOS - RD E2E/Integration Tests
       timeout_in: 30
-      container:
+      osx_instance:
         image: big-sur-base
         kvm: 'true'
         cpu: 4
