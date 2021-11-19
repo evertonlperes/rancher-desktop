@@ -12,7 +12,6 @@ export class TestUtils {
       args:             [path.join(__dirname, '../../')],
       chromeDriverArgs: [
         '--no-sandbox',
-        '--disable-gpu',
         '--whitelisted-ips=',
         '--disable-dev-shm-usage',
       ],

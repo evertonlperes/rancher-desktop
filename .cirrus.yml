@@ -49,14 +49,17 @@ task:
         kvm: 'true'
 
       install_deps_script: |
-        brew install node
+        brew install node && brew doctor
         node -v && npm -v
 
-  node_modules_cache:
-    folder: node_modules
-    fingerprint_script: cat package-lock.json
-    populate_script: npm ci
-  test_script: |
+  # node_modules_cache:
+  #   folder: node_modules
+  #   fingerprint_script: cat package-lock.json
+  #   populate_script: npm ci
+
+  build_script: |
     npm install
+
+  test_script: |
     chmod +x ./node_modules
     npm run test:e2e:ci
