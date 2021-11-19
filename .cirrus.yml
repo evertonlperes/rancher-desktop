@@ -12,11 +12,8 @@ task:
     - apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo xvfb
     - curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
 
-  before_script: # starging xvfb server
-    - export DISPLAY=:99.0
-
   node_modules_cache:
     folder: node_modules
     fingerprint_script: cat package-lock.json
     populate_script: npm ci
-  test_script: npm run test:e2e:ci
+  test_script: xvfb-run --auto-servernum npm run test:e2e
