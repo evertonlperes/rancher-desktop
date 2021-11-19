@@ -4,20 +4,17 @@ task:
   container:
     image: ubuntu:20.04
     kvm: 'true'
-    cpu: 6
-    memory: 16G
+    cpu: 4
+    memory: 8G
 
-  before_script:
-    - export DISPLAY=':99.0'
-    - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
   install_deps_script:
     - apt-get update
     - apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo xvfb
     - curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
-    - ps -ef | grep Xvfb
+    - xvfb-run -h && sudo service xvfb status
 
   node_modules_cache:
     folder: node_modules
     fingerprint_script: cat package-lock.json
-    populate_script: npm install
+    populate_script: npm ci
   test_script: npm run test:e2e:ci
