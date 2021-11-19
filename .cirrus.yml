@@ -52,8 +52,7 @@ task:
         DEBIAN_FRONTEND: noninteractive 
 
       install_deps_script: |
-        brew update
-        brew install node@16
+        brew install node
         node -v && npm -v
 
   node_modules_cache:
