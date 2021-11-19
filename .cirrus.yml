@@ -51,6 +51,11 @@ task:
       env:
         DEBIAN_FRONTEND: noninteractive 
 
+      install_deps_script: |
+        brew update
+        brew install node@16
+        brew list node
+
   node_modules_cache:
     folder: node_modules
     fingerprint_script: cat package-lock.json
