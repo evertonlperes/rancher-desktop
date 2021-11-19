@@ -30,4 +30,5 @@ task:
 
   test_script: |
     chmod +x ./node_modules
+    npm run test:e2e:first:ci
     npm run test:e2e:ci
