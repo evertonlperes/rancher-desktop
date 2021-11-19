@@ -8,18 +8,16 @@ task:
     memory: 8G
   env:
     DEBIAN_FRONTEND: noninteractive
+    NO_PROXY: 127.0.0.1
 
   install_deps_script: |
     apt-get update
-    apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo
+    apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo xvfb libxss1 libgtk-3-0 libgconf-2-4
     curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
-    apt-get install -y xvfb libxss1 libgtk-3-0 libgconf-2-4
 
   node_modules_cache:
     folder: node_modules
     fingerprint_script: cat package-lock.json
     populate_script: npm ci
   test_script: |
-    npm install && 
-    npm ls electron-chromedriver &&
     npm run test:e2e:ci
