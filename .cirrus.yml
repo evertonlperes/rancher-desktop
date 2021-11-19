@@ -57,6 +57,6 @@ task:
     fingerprint_script: cat package-lock.json
     populate_script: npm ci
   test_script: |
+    npm install
     chmod +x ./node_modules
-    ./node_modules/.bin/chromedriver -h
     npm run test:e2e:ci
