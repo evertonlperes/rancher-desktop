@@ -12,7 +12,7 @@ task:
         DEBIAN_FRONTEND: noninteractive 
       install_deps_script: |
         apt-get update
-        apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo
+        apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo qemu-system-x86 qemu-utils
         curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
         apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
 
