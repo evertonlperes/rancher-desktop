@@ -34,4 +34,8 @@ task:
   
   binaries_artifacts:
     path: "/root/.local/share/rancher-desktop/logs/*"
+  always:
+    rancher_logs:
+      path: "/root/.local/share/rancher-desktop/logs/*"
+      formart: zip
     
