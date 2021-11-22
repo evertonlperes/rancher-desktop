@@ -61,14 +61,14 @@ export default {
     ipcRenderer.on('update-state', this.onUpdateState);
     ipcRenderer.send('update-state');
     try {
-      this.$data.settings = await ipcRenderer.invoke('settings-read');
-    } catch (error) {
-      console.error(`settings-read() failed with error ${ error }`);
-    }
-    try {
       this.$data.version = await ipcRenderer.invoke('get-app-version');
     } catch (error) {
       console.error(`get-app-version() failed with error ${ error }`);
+    }
+    try {
+      this.$data.settings = await ipcRenderer.invoke('settings-read');
+    } catch (error) {
+      console.error(`settings-read() failed with error ${ error }`);
     }
   },
 
