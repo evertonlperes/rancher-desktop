@@ -86,13 +86,16 @@ export class TestUtils {
   public createSettingsFile(settingsPath: string) {
     const settingsData = {}; // empty array
     const settingsJson = JSON.stringify(settingsData);
-    const fileSettingsLocation = `${ settingsPath }\/settings.json`;
+    const fileSettingsName = 'settings.json';
 
     try {
-      fs.writeFileSync(fileSettingsLocation, settingsJson, 'utf8');
-      console.log('default settings files created on: ', fileSettingsLocation);
+      if (!fs.existsSync(settingsPath)) {
+        fs.mkdirSync(settingsPath, { recursive: true });
+        fs.writeFileSync(path.join(settingsPath, '/', fileSettingsName), settingsJson);
+        console.log('Default settings file successfully created on: ', settingsPath + fileSettingsName );
+      }
     } catch (err) {
-      console.error('Error: ', err);
+      console.error('Error during default settings creation. Error: --> ', err);
     }
   }
 
