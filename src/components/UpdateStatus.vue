@@ -52,7 +52,7 @@ const UpdateStatusProps = Vue.extend({
     },
     version: {
       type:    String,
-      default: '(checking...)',
+      // default: '(checking...)',
     },
   }
 });
