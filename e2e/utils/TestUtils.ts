@@ -54,7 +54,7 @@ export class TestUtils {
     switch (os.platform()) {
     case 'darwin': {
       paths = new DarwinPaths();
-      const darwinConfigPath = `${ paths.config }\/settings.json`;
+      const darwinConfigPath = paths.config;
 
       this.createSettingsFile(darwinConfigPath);
     }
@@ -62,7 +62,7 @@ export class TestUtils {
 
     case 'linux': {
       paths = new LinuxPaths();
-      const linuxConfigPath = `${ paths.config }\/settings.json`;
+      const linuxConfigPath = paths.config;
 
       this.createSettingsFile(linuxConfigPath);
     }
@@ -70,7 +70,7 @@ export class TestUtils {
 
     case 'win32': {
       paths = new Win32Paths();
-      const winConfigPath = `${ paths.config }\/settings.json`;
+      const winConfigPath = paths.config;
 
       this.createSettingsFile(winConfigPath);
     }
@@ -86,7 +86,7 @@ export class TestUtils {
   public createSettingsFile(settingsPath: string) {
     const settingsData = {}; // empty array
     const settingsJson = JSON.stringify(settingsData);
-    const fileSettingsLocation = settingsPath;
+    const fileSettingsLocation = `${ settingsPath }\/settings.json`;
 
     try {
       fs.writeFileSync(fileSettingsLocation, settingsJson, 'utf8');
