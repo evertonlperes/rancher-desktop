@@ -40,7 +40,7 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     utils.createDefaultSettings();
     app = await utils.setUp();
 
-    return utils.byPassFirstPage();
+    // return utils.byPassFirstPage();
   });
 
   afterAll(async() => {
