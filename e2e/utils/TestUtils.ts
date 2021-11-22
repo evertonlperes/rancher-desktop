@@ -92,7 +92,7 @@ export class TestUtils {
       if (!fs.existsSync(settingsPath)) {
         fs.mkdirSync(settingsPath, { recursive: true });
         fs.writeFileSync(path.join(settingsPath, '/', fileSettingsName), settingsJson);
-        console.log('Default settings file successfully created on: ', settingsPath + fileSettingsName );
+        console.log('Default settings file successfully created on: ', `${ settingsPath }/${ fileSettingsName }`);
       }
     } catch (err) {
       console.error('Error during default settings creation. Error: --> ', err);
