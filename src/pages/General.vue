@@ -45,7 +45,7 @@ export default {
       /** @type import('@/main/update').UpdateState | null */
       updateState: null,
       /** @type string */
-      version:     '(checking...)',
+      version:     process.env.NODE_ENV === 'test' ? '(checking...)' : 'TEST-VERSION',
     };
   },
 
