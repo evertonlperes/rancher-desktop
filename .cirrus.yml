@@ -22,7 +22,7 @@ task:
         image: big-sur-base
         kvm: 'true'
       install_deps_script: |
-        brew install node && brew doctor
+        brew install node
         node -v && npm -v
 
   build_script: |
@@ -30,5 +30,4 @@ task:
 
   test_script: |
     chmod +x ./node_modules
-    npm run test:e2e:first:ci
     npm run test:e2e:ci

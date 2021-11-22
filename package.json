@@ -30,7 +30,7 @@
     "test:e2e": "node ./scripts/e2e.mjs",
     "test:e2e:first:ci": "xvfb-maybe --server-args=\"-screen 0 1024x768x24\" -- node ./scripts/e2e.mjs e2e/main.e2e.spec.ts",
     "test:e2e:full": "node ./scripts/e2e.mjs --testPathIgnorePatterns e2e/main.e2e.spec.ts",
-    "test:e2e:ci": "xvfb-maybe --server-args=\"-screen 0 1024x768x24\" -- npm run test:e2e:full",
+    "test:e2e:ci": "xvfb-maybe --server-args=\"-screen 0 1024x768x24\" -- npm run test:e2e",
     "test:e2e:ci:linux": "xvfb-maybe --server-args=\"-screen 1 1024x768x24\" -- npm run test:e2e:full",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node ./scripts/postinstall.mjs",

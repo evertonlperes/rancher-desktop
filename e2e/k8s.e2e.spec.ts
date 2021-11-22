@@ -1,7 +1,6 @@
 import os from 'os';
 import path from 'path';
 import util from 'util';
-import { exec } from 'child_process';
 import fetch from 'node-fetch';
 import { Application } from 'spectron';
 import * as childProcess from '../src/utils/childProcess';
@@ -38,6 +37,7 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
   beforeAll(async() => {
     utils = new TestUtils();
     utils.setupJestTimeout();
+    utils.createDefaultSettings();
     app = await utils.setUp();
 
     return utils.byPassFirstPage();

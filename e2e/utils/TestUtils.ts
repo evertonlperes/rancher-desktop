@@ -1,5 +1,9 @@
+import os from 'os';
+import fs from 'fs';
 import path from 'path';
+import { callbackify } from 'util';
 import { Application } from 'spectron';
+import { Paths, DarwinPaths, LinuxPaths, Win32Paths } from '@/utils/paths';
 
 const electronPath = require('electron');
 
@@ -41,10 +45,62 @@ export class TestUtils {
   }
 
   /**
+   * Create empty default settings file by platform
+   * Better way to bypass First Page without redirecting
+   */
+  public createDefaultSettings() {
+    let paths: Paths;
+
+    switch (os.platform()) {
+    case 'darwin': {
+      paths = new DarwinPaths();
+      const darwinConfigPath = `${ paths.config }\/settings.json`;
+
+      this.createSettingsFile(darwinConfigPath);
+    }
+      break;
+
+    case 'linux': {
+      paths = new LinuxPaths();
+      const linuxConfigPath = `${ paths.config }\/settings.json`;
+
+      this.createSettingsFile(linuxConfigPath);
+    }
+      break;
+
+    case 'win32': {
+      paths = new Win32Paths();
+      const winConfigPath = `${ paths.config }\/settings.json`;
+
+      this.createSettingsFile(winConfigPath);
+    }
+      break;
+    }
+  }
+
+  /**
+   * Create empty settings file to bypass
+   * First Page in CI
+   * @param settingsPath
+   */
+  public createSettingsFile(settingsPath: string) {
+    const settingsData = {}; // empty array
+    const settingsJson = JSON.stringify(settingsData);
+    const fileSettingsLocation = settingsPath;
+
+    try {
+      fs.writeFileSync(fileSettingsLocation, settingsJson, 'utf8');
+      console.log('default settings files created on: ', fileSettingsLocation);
+    } catch (err) {
+      console.error('Error: ', err);
+    }
+  }
+
+  /**
    * Set jest command timeout based on env
    */
   public setupJestTimeout() {
-    const jestCiTimeout = 360000;
+    const jestCiTimeout = 600000;
     const jestDevTimeout = 90000;
 
     if (process.env.CI) {
