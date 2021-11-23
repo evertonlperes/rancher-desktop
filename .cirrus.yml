@@ -32,7 +32,6 @@ task:
     npm install
 
   prepate_user_script:
-    - groupadd -g $(stat -c '%g' /dev/kvm) kvm
     - useradd -m -G kvm testuser
 
   test_script: |
