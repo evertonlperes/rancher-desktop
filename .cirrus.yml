@@ -28,11 +28,19 @@ task:
     #     brew install node
     #     node -v && npm -v
 
-  build_script: |
-    npm install
+
 
   prepate_user_script:
     - useradd -m -G kvm testuser
+    
+  build_script: |
+    npm install
+
+  node_modules_cache:
+    fingerprint_script: cat package-lock.json
+    folder: /home/testuser/.cache/rancher-desktop
+
+  fix_cache_perm_script: chown -R testuser.testuser /home/testuser
 
   test_script: |
     chmod +x ./node_modules
