@@ -24,18 +24,16 @@ task:
     #   install_deps_script: |
     #     brew install node
     #     node -v && npm -v
-    
+  
+  prepate_user_script: |
+    useradd -m -G kvm rancheruser
+    cp -rf . /home/rancheruser/
+
   build_script: |
-    npm install
+    sudo -iu rancheruser npm install
 
   test_script: |
-    chmod +x ./node_modules
-    npm run test:e2e:ci
-  
-  binaries_artifacts:
-    path: "/root/.local/share/rancher-desktop/logs/*"
-  always:
-    rancher_logs:
-      path: "/root/.local/share/rancher-desktop/logs/*"
-      formart: zip
+    chmod -R rancheruser ./node_modules
+    sudo -iu rancheruser npm run test:e2e:ci
+
     
