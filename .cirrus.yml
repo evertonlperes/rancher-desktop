@@ -2,7 +2,7 @@ task:
   trigger_type: manual
   matrix:
     - name: Linux - RD E2E/Integration Tests
-      timeout_in: 30
+      timeout_in: 60
       container:
         image: ubuntu:20.04
         kvm: true
@@ -30,10 +30,12 @@ task:
     cp -rf . /home/rancheruser/
 
   build_script: |
+    chown -R rancheruser:rancheruser /home/rancheruser/
+    chown -R rancheruser:rancheruser /dev/kvm
     sudo -iu rancheruser npm install
 
   test_script: |
-    chmod -R rancheruser ./node_modules
+    export KUBECONFIG=/home/rancheruser/.kube/config
     sudo -iu rancheruser npm run test:e2e:ci
 
     
