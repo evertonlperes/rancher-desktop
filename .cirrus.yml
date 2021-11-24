@@ -33,5 +33,7 @@ task:
 
   on_failure:
     logs_artifacts:
-      path: "/home/rancheruser/*.png"
+      path: | 
+        "/home/rancheruser/*.png"
+        "/home/rancheruser/*.log"
       format: zip
