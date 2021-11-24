@@ -45,7 +45,7 @@ export default {
       /** @type import('@/main/update').UpdateState | null */
       updateState: null,
       /** @type string */
-      // version:     '(checking...)',
+      version:     '(checking...)',
     };
   },
 
@@ -65,11 +65,11 @@ export default {
     } catch (error) {
       console.error(`settings-read() failed with error ${ error }`);
     }
-    // try {
-    //   this.$data.version = await ipcRenderer.invoke('get-app-version');
-    // } catch (error) {
-    //   console.error(`get-app-version() failed with error ${ error }`);
-    // }
+    try {
+      this.$data.version = await ipcRenderer.invoke('get-app-version');
+    } catch (error) {
+      console.error(`get-app-version() failed with error ${ error }`);
+    }
   },
 
   beforeDestroy() {
