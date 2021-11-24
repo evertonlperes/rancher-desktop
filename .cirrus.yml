@@ -18,17 +18,15 @@ task:
   
   prepate_user_script: |
     useradd -m -G kvm rancheruser
-    cp -rf . /home/rancheruser/rancher-desktop
+    cp -rf . /home/rancheruser
 
   build_script: |
-    chown -R rancheruser:rancheruser /home/rancheruser/rancher-desktop
+    chown -R rancheruser:rancheruser /home/rancheruser
     chown -R rancheruser:rancheruser /dev/kvm
-    sudo -iu rancheruser
-    cd /home/rancheruser/rancher-desktop
-    npm install
+    sudo -iu rancheruser npm install
 
   test_script: |
     export KUBECONFIG=/home/rancheruser/.kube/config
-    npm run test:e2e:ci
+    sudo -iu rancheruser npm run test:e2e:ci
 
     
