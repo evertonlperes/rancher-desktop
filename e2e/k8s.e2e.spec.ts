@@ -82,8 +82,9 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
 
     // Delete this debug entry
     app.client.saveScreenshot('./it-02.png');
+    console.log('I am into the it troublemaker block');
     // Wait for the progress bar to exist
-    // await progress.waitForExist({ timeout: 30000 });
+    await progress.waitForExist({ timeout: 30000 });
     // Wait for progress bar to disappear again
     await progress.waitForExist({ timeout: 360000, reverse: true });
 
