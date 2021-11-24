@@ -10,7 +10,6 @@ task:
         memory: 8G
       env:
         DEBIAN_FRONTEND: noninteractive
-        NODE_ENV: test
       install_deps_script: |
         apt-get update
         apt-get install -y --no-install-recommends apt-transport-https ca-certificates gcc g++ curl git golang openssh-client make netcat sudo qemu-system-x86 qemu-utils
@@ -28,6 +27,7 @@ task:
 
   test_script: |
     export KUBECONFIG=/home/rancheruser/.kube/config
+    export NODE_ENV=test
     sudo -iu rancheruser npm run test:e2e:ci
 
     
