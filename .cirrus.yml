@@ -15,27 +15,20 @@ task:
         apt-get install -y --no-install-recommends apt-transport-https ca-certificates gcc g++ curl git golang openssh-client make netcat sudo qemu-system-x86 qemu-utils
         curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
         apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
-
-    # - name: macOS - RD E2E/Integration Tests
-    #   timeout_in: 30
-    #   osx_instance:
-    #     image: big-sur-base
-    #     kvm: true
-    #   install_deps_script: |
-    #     brew install node
-    #     node -v && npm -v
   
   prepate_user_script: |
     useradd -m -G kvm rancheruser
-    cp -rf . /home/rancheruser/
+    cp -rf . /home/rancheruser/rancher-desktop
 
   build_script: |
-    chown -R rancheruser:rancheruser /home/rancheruser/
+    chown -R rancheruser:rancheruser /home/rancheruser/rancher-desktop
     chown -R rancheruser:rancheruser /dev/kvm
-    sudo -iu rancheruser npm install
+    sudo -iu rancheruser
+    cd /home/rancheruser/rancher-desktop
+    npm install
 
   test_script: |
     export KUBECONFIG=/home/rancheruser/.kube/config
-    sudo -iu rancheruser npm run test:e2e:ci
+    npm run test:e2e:ci
 
     
