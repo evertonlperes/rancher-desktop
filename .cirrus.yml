@@ -31,4 +31,7 @@ task:
     export NODE_ENV=test
     sudo -iu rancheruser npm run test:e2e:ci
 
-    
+  on_failure:
+    logs_artifacts:
+      path: "*.png"
+      format: zip
