@@ -9,7 +9,8 @@ task:
         cpu: 4
         memory: 8G
       env:
-        DEBIAN_FRONTEND: noninteractive 
+        DEBIAN_FRONTEND: noninteractive
+        NODE_ENV: test
       install_deps_script: |
         apt-get update
         apt-get install -y --no-install-recommends apt-transport-https ca-certificates gcc g++ curl git golang openssh-client make netcat sudo qemu-system-x86 qemu-utils
