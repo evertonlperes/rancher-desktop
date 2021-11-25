@@ -12,7 +12,9 @@ export class TestUtils {
   public async setUp() {
     this.app = new Application({
       path:             electronPath as any,
-      args:             [path.join(__dirname, '../../')],
+      args:             ['--whitelisted-ips', path.join(__dirname, '../../')],
+      host:             '127.0.0.1',
+      port:             9599,
       chromeDriverArgs: [
         '--no-sandbox',
         '--disable-gpu',
@@ -20,7 +22,8 @@ export class TestUtils {
         '--disable-dev-shm-usage',
         '--remote-debugging-port=9222'],
       connectionRetryTimeout: 60_000,
-      chromeDriverLogPath:    './chromedriver.log'
+      chromeDriverLogPath:    './chromedriver.log',
+      webdriverLogPath:       './'
     });
 
     return await this.app.start();
