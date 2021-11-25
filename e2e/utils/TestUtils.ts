@@ -17,7 +17,8 @@ export class TestUtils {
         '--no-sandbox',
         '--disable-gpu',
         '--whitelisted-ips=',
-        '--disable-dev-shm-usage'],
+        '--disable-dev-shm-usage',
+        '--remote-debugging-port=9222'],
       connectionRetryTimeout: 60_000,
       chromeDriverLogPath:    './chromedriver.log'
     });
