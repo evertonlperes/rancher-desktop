@@ -7,7 +7,7 @@ import Electron from 'electron';
 // Partial<T> (https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)
 // only allows missing properties on the top level; if anything is given, then all
 // properties of that top-level property must exist.  RecursivePartial<T> instead
-// allows any decendent properties to be omitted.
+// allows any descendent properties to be omitted.
 type RecursivePartial<T> = {
   [P in keyof T]?:
     T[P] extends (infer U)[] ? RecursivePartial<U>[] :
@@ -26,6 +26,7 @@ interface IpcMainEvents {
   'k8s-versions': () => void;
   'k8s-reset': (mode: 'fast' | 'wipe') => void;
   'k8s-state': () => void;
+  'k8s-current-engine': () => void;
   'k8s-current-port': () => void;
   'k8s-restart-required': () => void;
   'k8s-progress': () => void;
@@ -33,6 +34,7 @@ interface IpcMainEvents {
   'k8s-integration-set': (name: string, newState: boolean) => void;
   'k8s-integration-warnings': () => void;
   'factory-reset': () => void;
+  'get-app-version': () => void;
 
   // #region main/update
   'update-state': () => void;
@@ -60,7 +62,6 @@ interface IpcMainEvents {
  * invoke on the main process, i.e. ipcRenderer.invoke() -> ipcMain.handle()
  */
 interface IpcMainInvokeEvents {
-  'settings-read': () => import('@/config/settings').Settings;
   'settings-write': (arg: RecursivePartial<import('@/config/settings').Settings>) => void;
   'k8s-supports-port-forwarding': () => boolean;
   'service-fetch': (namespace?: string) => import('@/k8s-engine/k8s').ServiceEntry[];
@@ -80,9 +81,12 @@ interface IpcMainInvokeEvents {
  */
 interface IpcRendererEvents {
   'settings-update': (settings: import('@/config/settings').Settings) => void;
+  'settings-read': (settings: import('@/config/settings').Settings) => void;
+  'get-app-version': (version: string) => void;
   'update-state': (state: import('@/k8s-engine/k8s').State) => void;
   'k8s-progress': (progress: Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>) => void;
   'k8s-check-state': (state: import('@/k8s-engine/k8s').State) => void;
+  'k8s-current-engine': (engine: import('@/config/settings').ContainerEngine) => void;
   'k8s-current-port': (port: number) => void;
   'k8s-restart-required': (required: Record<string, [any, any] | []>) => void;
   'k8s-versions': (versions: string[]) => void;

@@ -9,6 +9,7 @@
       :state="state"
       :show-all="settings.images.showAll"
       :selected-namespace="settings.images.namespace"
+      :supports-namespaces="supportsNamespaces"
       @toggledShowAll="onShowAllImagesChanged"
       @switchNamespace="onChangeNamespace"
     />
@@ -19,16 +20,18 @@
 import { ipcRenderer } from 'electron';
 import Images from '@/components/Images.vue';
 import * as K8s from '@/k8s-engine/k8s';
+import { defaultSettings } from '@/config/settings';
 
 export default {
   components: { Images },
   data() {
     return {
-      settings:          ipcRenderer.sendSync('settings-read'),
-      k8sState:          ipcRenderer.sendSync('k8s-state'),
-      imageManagerState: false,
-      images:            [],
-      imageNamespaces:   [],
+      settings:           defaultSettings,
+      k8sState:           ipcRenderer.sendSync('k8s-state'),
+      imageManagerState:  false,
+      images:             [],
+      imageNamespaces:    [],
+      supportsNamespaces: true,
     };
   },
 
@@ -66,7 +69,7 @@ export default {
 
     ipcRenderer.on('images-changed', (event, images) => {
       this.$data.images = images;
-      if (this.imageNamespaces.length === 0) {
+      if (this.supportsNamespaces && this.imageNamespaces.length === 0) {
         // This happens if the user clicked on the Images panel before data was ready,
         // so no namespaces were available when it initially asked for them.
         // When the data is ready, images are pushed in, but namespaces aren't.
@@ -91,10 +94,16 @@ export default {
       this.$data.imageManagerState = await ipcRenderer.invoke('images-check-state');
     })();
     ipcRenderer.on('images-namespaces', (event, namespaces) => {
+      // TODO: Use a specific message to indicate whether messages are supported or not.
       this.$data.imageNamespaces = namespaces;
+      this.$data.supportsNamespaces = namespaces.length > 0;
       this.checkSelectedNamespace();
     });
     ipcRenderer.send('images-namespaces-read');
+    ipcRenderer.on('settings-read', (event, settings) => {
+      this.$data.settings = settings;
+    });
+    ipcRenderer.send('settings-read');
   },
   beforeDestroy() {
     ipcRenderer.invoke('images-mounted', false);
@@ -102,7 +111,7 @@ export default {
 
   methods: {
     checkSelectedNamespace() {
-      if (this.imageNamespaces.length === 0) {
+      if (!this.supportsNamespaces || this.imageNamespaces.length === 0) {
         // Nothing to verify yet
         return;
       }
