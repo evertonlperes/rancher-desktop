@@ -36,10 +36,11 @@ task:
   test_script: |
     export KUBECONFIG=/home/rancheruser/.kube/config
     export NODE_ENV=test
-    sudo -iu rancheruser npm run test:e2e:ci
+    sudo -iu rancheruser npm run test:e2e:first:ci && test:e2e:full
 
   on_failure:
     logs_artifacts:
       path: | 
-        /home/rancheruser/**.png
-        /home/rancheruser/**.log
+        /home/rancheruser/*.png
+        /home/rancheruser/chromedriver.log
+        /home/rancheruser/wdio.log
