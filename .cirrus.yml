@@ -24,6 +24,7 @@ task:
   
 
   prepate_user_script: |
+    groupadd -g $(stat -c '%g' /dev/kvm) kvm
     useradd -m -G kvm rancheruser
     cp -rf . /home/rancheruser
 
