@@ -12,11 +12,12 @@ export class TestUtils {
   public async setUp() {
     this.app = new Application({
       path:             electronPath as any,
-      args:             [
+      args:             [path.join(__dirname, '../../')],
+      chromeDriverArgs: [
         '--no-sandbox',
         '--disable-gpu',
         '--whitelisted-ips=',
-        '--disable-dev-shm-usage', path.join(__dirname, '../../')],
+        '--disable-dev-shm-usage'],
       connectionRetryTimeout: 60_000,
       chromeDriverLogPath:    './chromedriver.log'
     });
