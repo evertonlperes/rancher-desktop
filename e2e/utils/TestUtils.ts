@@ -1,7 +1,6 @@
 import os from 'os';
 import fs from 'fs';
 import path from 'path';
-import { callbackify } from 'util';
 import { Application } from 'spectron';
 import { Paths, DarwinPaths, LinuxPaths, Win32Paths } from '@/utils/paths';
 
