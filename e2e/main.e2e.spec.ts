@@ -25,15 +25,11 @@ test.describe.serial('Rancher Desktop - Main App', () => {
     await electronApp.close();
   });
 
-  test('should open the main app', async() => {
-    page = await electronApp.firstWindow();
-    await page.waitForSelector('.progress');
-  });
-
   test('should land on General page', async() => {
+    page = await electronApp.firstWindow();
     mainTitle = page.locator(mainTitleSelector);
 
-    await await expect(mainTitle).toHaveText('Welcome to Rancher Desktop');
+    await expect(mainTitle).toHaveText('Welcome to Rancher Desktop');
   });
 
   test('should navigate to Kubernetes Settings and check elements', async() => {
