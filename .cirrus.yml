@@ -14,7 +14,7 @@ task:
       install_deps_script: |
         apt-get update
         apt-get install -y --no-install-recommends apt-transport-https ca-certificates gcc g++ curl git golang openssh-client make netcat sudo qemu-system-x86 qemu-utils vim
-        curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
+        curl -fsSL https://deb.nodesource.com/setup_14.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
         apt-get install -y xvfb gconf-service libasound2 libatk1.0-0 libc6 libcairo2 libcups2 \
         libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 \
         libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 \
