@@ -10,7 +10,7 @@ import { test, expect } from '@playwright/test';
 let page: Page;
 let electronApp: ElectronApplication;
 
-test.describe.serial('POC Playwright - Rancher Desktop', () => {
+test.describe.serial('Rancher Desktop - Main App', () => {
   let mainTitle: Locator;
   const mainTitleSelector = '[data-test="mainTitle"]';
 
@@ -19,8 +19,6 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
     const appPath = await electronApp.evaluate(async({ app }) => {
       return await app.getAppPath();
     });
-
-    console.log('Log from appPath ---> ', appPath);
   });
 
   test.afterAll(async() => {
@@ -30,15 +28,6 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
   test('should open the main app', async() => {
     page = await electronApp.firstWindow();
     await page.waitForSelector('.progress');
-    await delay(10000); // Wait a bit
-
-    // Use it for integration tools test - wait the entire app backend being loaded.
-    // const progressBarSelector = page.locator('.progress');
-    // await progressBarSelector.waitFor({ state: 'detached', timeout: 60000 });
-
-    // const versionInfo = page.locator('.versionInfo');
-
-    // await expect(versionInfo).toHaveText('Version: (checking...)');
   });
 
   test('should get General page content', async() => {
@@ -48,34 +37,20 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
   });
 
   test('should navigate to Kubernetes Settings and check elements', async() => {
-    const k8sVersionDndSelector = '.labeled-input';
     const k8sMemorySliderSelector = '[id="memoryInGBWrapper"]';
     const k8sCpuSliderSelector = '[id="numCPUWrapper"]';
     const k8sPortSelector = '[data-test="portConfig"]';
     const k8sResetBtn = '[data-test="k8sResetBtn"]';
 
     await navigateTo('K8s');
-    // try {
-    //   await page.click(`.nav li[item="/K8s"] a`);
-    //   await page.waitForSelector('.contents');
-    // } catch (err) {
-    //   console.log('Error during K8s Settings navigation. Error --> ', err);
-    // }
-
     // Collecting data from selectors
-    const k8sVersionDnd = page.locator(k8sVersionDndSelector);
     const k8sSettingsTitle = page.locator(mainTitleSelector);
     const k8sMemorySlider = page.locator(k8sMemorySliderSelector);
     const k8sCpuSlider = page.locator(k8sCpuSliderSelector);
     const k8sPort = page.locator(k8sPortSelector);
     const k8sResetButton = page.locator(k8sResetBtn);
 
-    // const progressBarSelector = page.locator('.progress');
-
-    // await progressBarSelector.waitFor({ state: 'hidden' });
-
     await expect(k8sSettingsTitle).toHaveText('Kubernetes Settings');
-    await expect(k8sVersionDnd).toBeVisible();
     await expect(k8sMemorySlider).toBeVisible();
     await expect(k8sCpuSlider).toBeVisible();
     await expect(k8sPort).toBeVisible();
@@ -87,12 +62,6 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
   } else {
     test('should navigate to Supporting Utilities anc check elements', async() => {
       await navigateTo('Integrations');
-      // try {
-      //   await page.click(`.nav li[item="/Integrations"] a`);
-      //   delay(2000);
-      // } catch (err) {
-      //   console.log('Error during Integrations navigation. Error --> ', err);
-      // }
       const getSupportTitle = page.locator(mainTitleSelector);
 
       await expect(getSupportTitle).toHaveText('Supporting Utilities');
@@ -103,13 +72,6 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
     const getSupportTitle = page.locator(mainTitleSelector);
 
     await navigateTo('Images');
-    // try {
-    //   await page.click(`.nav li[item="/Images"] a`);
-    //   delay(2000);
-    // } catch (err) {
-    //   console.log('Error during Images navigation. Error --> ', err);
-    // }
-
     await expect(getSupportTitle).toHaveText('Images');
   });
 
@@ -117,13 +79,6 @@ test.describe.serial('POC Playwright - Rancher Desktop', () => {
     const getSupportTitle = page.locator(mainTitleSelector);
 
     await navigateTo('Troubleshooting');
-    // try {
-    //   await page.click(`.nav li[item="/Troubleshooting"] a`);
-    //   delay(2000);
-    // } catch (err) {
-    //   console.log('Error during Troubleshooting navigation. Error --> ', err);
-    // }
-
     await expect(getSupportTitle).toHaveText('Troubleshooting');
   });
 });
