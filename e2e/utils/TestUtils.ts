@@ -11,8 +11,8 @@ export class TestUtils {
 
   public async setUp() {
     this.app = new Application({
-      path:             electronPath as any,
-      args:             ['--whitelisted-ips', path.join(__dirname, '../../')],
+      path:             path.join(__dirname, '../../node_modules/.bin/electron'),
+      args:             [path.join(__dirname, '../../')],
       host:             '127.0.0.1',
       port:             9599,
       chromeDriverArgs: [
