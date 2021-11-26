@@ -76,30 +76,30 @@ describe('Rancher Desktop - K8s Sample Deployment Test', () => {
     expect(title).toBe('Rancher Desktop');
   });
 
-  it('should run Kubernetes on Rancher Desktop', async() => {
-    //await app.client.waitUntilWindowLoaded();
-    const progress = await app.client.$('.progress');
+  // it('should run Kubernetes on Rancher Desktop', async() => {
+  //   await app.client.waitUntilWindowLoaded();
+  //   const progress = await app.client.$('.progress');
 
-    // Wait for the progress bar to exist
-    await progress.waitForExist({ timeout: 30000 });
-    // Wait for progress bar to disappear again
-    await progress.waitForExist({ timeout: 360000, reverse: true });
+  //   // Wait for the progress bar to exist
+  //   await progress.waitForExist({ timeout: 30000 });
+  //   // Wait for progress bar to disappear again
+  //   await progress.waitForExist({ timeout: 360000, reverse: true });
 
-    // Delete this debug entry
-    app.client.saveScreenshot('./it-02.png');
+  //   // Delete this debug entry
+  //   app.client.saveScreenshot('./it-02.png');
 
-    const k8sVersion = await kubectl('version');
+  //   const k8sVersion = await kubectl('version');
 
-    console.log('Checking k8s version cli and server ---> ', k8sVersion);
+  //   console.log('Checking k8s version cli and server ---> ', k8sVersion);
 
-    const output = await kubectl('cluster-info');
+  //   const output = await kubectl('cluster-info');
 
-    console.error('Output from cluster-info ---> ', output);
-    // Filter out ANSI escape codes (colours).
-    const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
+  //   console.error('Output from cluster-info ---> ', output);
+  //   // Filter out ANSI escape codes (colours).
+  //   const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
 
-    expect(filteredOutput).toMatch(/ is running at ./);
-  });
+  //   expect(filteredOutput).toMatch(/ is running at ./);
+  // });
 
   it('should create a sample namespace', async() => {
     app.client.saveScreenshot('./it-03.png');
