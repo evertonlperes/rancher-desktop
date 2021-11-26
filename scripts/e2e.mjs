@@ -54,9 +54,8 @@ class E2ETestRunner extends events.EventEmitter {
     const args = process.argv.slice(2).filter(x => x !== '--serial');
 
     this.#testProcess = this.spawn('Test process',
-      'node', 'node_modules/jest/bin/jest.js',
-      '--config', './e2e/jest.e2e.config.json',
-      '--detectOpenHandles', '--forceExit', ...args);
+      './node_modules/.bin/playwright', 'test',
+      '--config=e2e/playw-config.ts', ...args);
 
     return new Promise((resolve, reject) => {
       this.#testProcess.on('exit', (code, signal) => {
