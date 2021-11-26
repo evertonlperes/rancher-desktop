@@ -36,7 +36,8 @@ task:
   test_script: |
     export KUBECONFIG=/home/rancheruser/.kube/config
     export NODE_ENV=test
-    sudo -iu rancheruser npm run test:e2e:first:ci && npm run test:e2e:ci:linux
+    sudo -iu rancheruser npm run test:e2e:first:ci
+    sudo -iu rancheruser npm run test:e2e:ci:linux
 
   on_failure:
     logs_artifacts:
