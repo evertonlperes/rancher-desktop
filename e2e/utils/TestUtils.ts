@@ -3,15 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import { Application } from 'spectron';
 import { Paths, DarwinPaths, LinuxPaths, Win32Paths } from '@/utils/paths';
-
-const electronPath = require('electron');
+import electronPath from 'electron';
 
 export class TestUtils {
   public app: Application | undefined;
 
   public async setUp() {
     this.app = new Application({
-      path:             path.join(__dirname, '../../node_modules/.bin/electron'),
+      path:             electronPath as any,
       args:             [path.join(__dirname, '../../')],
       host:             '127.0.0.1',
       port:             9599,
