@@ -23,7 +23,7 @@ test.describe.serial('Rancher Desktop - Main App', () => {
   test.beforeAll(async() => {
     utils = new TestUtils();
     utils.createDefaultSettings();
-    electronApp = await _electron.launch({ args: [path.join(__dirname, '../')] });
+    electronApp = await _electron.launch({ args: ['--disable-dev-shm-usage', '--no-sandbox', path.join(__dirname, '../')] });
     context = electronApp.context();
 
     await context.tracing.start({ screenshots: true, snapshots: true });

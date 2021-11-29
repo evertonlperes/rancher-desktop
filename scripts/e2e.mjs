@@ -54,19 +54,9 @@ class E2ETestRunner extends events.EventEmitter {
   startTestProcess() {
     const args = process.argv.slice(2).filter(x => x !== '--serial');
 
-    if (os.platform().startsWith('win32')) {
-      const win32PwBinary = '/node_modules/.bin/playwright.cmd';
-
-      this.#testProcess = this.spawn('Test process - Win32',
-        win32PwBinary, 'test',
-        '--config=e2e/playw-config.ts', ...args);
-    } else {
-      const unixPwBinary = './node_modules/.bin/playwright';
-
-      this.#testProcess = this.spawn('Test process - Unix',
-        unixPwBinary, 'test',
-        '--config=e2e/playw-config.ts', ...args);
-    }
+    this.#testProcess = this.spawn('Test process',
+      'node', 'node_modules/playwright/cli.js',
+      'test', '--config=e2e/playw-config.ts', ...args);
 
     return new Promise((resolve, reject) => {
       this.#testProcess.on('exit', (code, signal) => {
