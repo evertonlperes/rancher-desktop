@@ -34,7 +34,7 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
       - name: Install Playwrigth deps - Linux Only
-        if: ${{ matrix.os == ubuntu-20.04 }}
+        if: ${{ matrix.os == 'ubuntu-20.04' }}
         run: ./node_modules/.bin/playwright install-deps
 
       - name: Run Linter check
