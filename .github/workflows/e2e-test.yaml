@@ -4,7 +4,9 @@ on:
   workflow_dispatch: {}
   schedule:
     - cron: '0 7 * * 1,3,5'
-
+env:
+  # Force terminal colors. @see https://www.npmjs.com/package/colors
+  FORCE_COLOR: 1
 jobs:
   e2e-test:
     runs-on: ${{ matrix.os }}
@@ -26,7 +28,7 @@ jobs:
           go-version: '^1.16'
 
       - name: Build CI
-        run: npm ci
+        run: npm ci && npm run playwright install-deps
         env:
           DEBUG: pw:install
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
