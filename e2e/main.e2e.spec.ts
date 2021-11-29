@@ -1,12 +1,13 @@
-import path from 'path';
+// import path from 'path';
 import os from 'os';
+import path from 'path';
 import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
 } from 'playwright';
 import { test, expect } from '@playwright/test';
+import { TestUtils } from './utils/TestUtils';
 
 let page: Page;
-let electronApp: ElectronApplication;
 
 /**
  * Using test.describe.serial make the test execute step by step, as described on each `test()` order
@@ -14,10 +15,14 @@ let electronApp: ElectronApplication;
  * */
 test.describe.serial('Rancher Desktop - Main App', () => {
   let mainTitle: Locator;
+  let utils: TestUtils;
+  let electronApp: ElectronApplication;
   let context: BrowserContext;
   const mainTitleSelector = '[data-test="mainTitle"]';
 
   test.beforeAll(async() => {
+    utils = new TestUtils();
+    utils.createDefaultSettings();
     electronApp = await _electron.launch({ args: [path.join(__dirname, '../')] });
     context = electronApp.context();
 
@@ -33,10 +38,6 @@ test.describe.serial('Rancher Desktop - Main App', () => {
   });
 
   test('should land on General page', async() => {
-    // await page.screenshot({
-    //   path: './firstpage.jpeg', fullPage: true, timeout: 0, type: 'jpeg'
-    // });
-    // await delay(5000);
     mainTitle = page.locator(mainTitleSelector);
 
     await expect(mainTitle).toHaveText('Welcome to Rancher Desktop');
@@ -102,15 +103,4 @@ async function navigateTo(path: string) {
   } catch (err) {
     console.log(`Cannot navigate to ${ path }. Error ---> `, err);
   }
-}
-
-/**
- * Delay function to slow things down
- * @param time
- * @returns
- */
-function delay(time: number | undefined) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, time);
-  });
 }
