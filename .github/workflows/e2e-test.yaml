@@ -42,10 +42,14 @@ jobs:
       - name: Run E2E Tests - ${{ matrix.os }}
         if: ${{ matrix.os != 'ubuntu-20.04' }}
         run: npm run test:e2e
+        env:
+          DEBUG: pw:browser*
 
       - name: Run E2E Tests - Linux with xvfb
         if: ${{ matrix.os == 'ubuntu-20.04'}}
         run: npm run test:e2e:ci:linux
+        env:
+          DEBUG: pw:browser*
 
       - uses: actions/upload-artifact@v2
         if: failure() # upload when previous step has failed
