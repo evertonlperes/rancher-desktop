@@ -16,9 +16,6 @@ test.describe.serial('Rancher Desktop - Main App', () => {
 
   test.beforeAll(async() => {
     electronApp = await _electron.launch({ args: [path.join(__dirname, '../')] });
-    const appPath = await electronApp.evaluate(async({ app }) => {
-      return await app.getAppPath();
-    });
   });
 
   test.afterAll(async() => {
@@ -27,6 +24,11 @@ test.describe.serial('Rancher Desktop - Main App', () => {
 
   test('should land on General page', async() => {
     page = await electronApp.firstWindow();
+
+    await page.screenshot({
+      path: './firstpage.jpeg', fullPage: true, timeout: 0, type: 'jpeg'
+    });
+    await delay(5000);
     mainTitle = page.locator(mainTitleSelector);
 
     await expect(mainTitle).toHaveText('Welcome to Rancher Desktop');

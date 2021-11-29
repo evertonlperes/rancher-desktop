@@ -27,6 +27,9 @@ jobs:
 
       - name: Build CI
         run: npm ci
+        env:
+          DEBUG: pw:install
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
       - name: Run Linter check
         run: npm run lint:nofix
@@ -40,4 +43,4 @@ jobs:
           name: webDriverLogs_Screenshots
           path: |
             ./wdio.log
-            ./*.png 
+            ./*.jpeg
