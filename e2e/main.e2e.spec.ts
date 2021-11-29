@@ -1,6 +1,8 @@
 import path from 'path';
 import os from 'os';
-import { ElectronApplication, _electron, Page, Locator } from 'playwright';
+import {
+  ElectronApplication, BrowserContext, _electron, Page, Locator
+} from 'playwright';
 import { test, expect } from '@playwright/test';
 
 let page: Page;
@@ -12,23 +14,29 @@ let electronApp: ElectronApplication;
  * */
 test.describe.serial('Rancher Desktop - Main App', () => {
   let mainTitle: Locator;
+  let context: BrowserContext;
   const mainTitleSelector = '[data-test="mainTitle"]';
 
   test.beforeAll(async() => {
     electronApp = await _electron.launch({ args: [path.join(__dirname, '../')] });
+    context = electronApp.context();
+
+    await context.tracing.start({ screenshots: true, snapshots: true });
+    page = await electronApp.firstWindow();
+
+    await page.screenshot({ path: './first_window.png' });
   });
 
   test.afterAll(async() => {
+    await context.tracing.stop({ path: './pw-trace.zip' });
     await electronApp.close();
   });
 
   test('should land on General page', async() => {
-    page = await electronApp.firstWindow();
-
-    await page.screenshot({
-      path: './firstpage.jpeg', fullPage: true, timeout: 0, type: 'jpeg'
-    });
-    await delay(5000);
+    // await page.screenshot({
+    //   path: './firstpage.jpeg', fullPage: true, timeout: 0, type: 'jpeg'
+    // });
+    // await delay(5000);
     mainTitle = page.locator(mainTitleSelector);
 
     await expect(mainTitle).toHaveText('Welcome to Rancher Desktop');

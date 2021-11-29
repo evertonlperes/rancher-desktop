@@ -44,3 +44,5 @@ jobs:
           path: |
             ./wdio.log
             ./*.jpeg
+            ./pw-trace.zip
+
