@@ -5,6 +5,7 @@
 'use strict';
 
 import events from 'events';
+import os from 'os';
 import buildUtils from './lib/build-utils.mjs';
 
 class E2ETestRunner extends events.EventEmitter {
@@ -53,9 +54,19 @@ class E2ETestRunner extends events.EventEmitter {
   startTestProcess() {
     const args = process.argv.slice(2).filter(x => x !== '--serial');
 
-    this.#testProcess = this.spawn('Test process',
-      './node_modules/.bin/playwright', 'test',
-      '--config=e2e/playw-config.ts', ...args);
+    if (os.platform().startsWith('win32')) {
+      const win32PwBinary = './node_modules/.bin/playwright.cmd';
+
+      this.#testProcess = this.spawn('Test process - Win32',
+        win32PwBinary, 'test',
+        '--config=e2e/playw-config.ts', ...args);
+    } else {
+      const unixPwBinary = './node_modules/.bin/playwright';
+
+      this.#testProcess = this.spawn('Test process - Unix',
+        unixPwBinary, 'test',
+        '--config=e2e/playw-config.ts', ...args);
+    }
 
     return new Promise((resolve, reject) => {
       this.#testProcess.on('exit', (code, signal) => {
