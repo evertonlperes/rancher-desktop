@@ -98,7 +98,7 @@ async function navigateTo(path: string) {
   try {
     return await Promise.all([
       page.click(`.nav li[item="/${ path }"] a`),
-      page.waitForNavigation({ url: `**/${ path }` })
+      page.waitForNavigation({ url: `**/${ path }`, timeout: 60000 })
     ]);
   } catch (err) {
     console.log(`Cannot navigate to ${ path }. Error ---> `, err);

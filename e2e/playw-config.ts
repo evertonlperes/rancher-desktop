@@ -9,7 +9,10 @@ const testDir = path.join(__dirname, '..', 'e2e');
 const config: Config<PlaywrightTestOptions> = {
   testDir,
   outputDir,
-  timeout: CI ? 600000 : 300000,
+  timeout:       CI ? 700000 : 300000,
+  globalTimeout: 5400000,
+  workers:       process.env.CI ? 1 : undefined,
+
 };
 
 export default config;
