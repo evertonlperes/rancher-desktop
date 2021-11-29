@@ -55,7 +55,7 @@ class E2ETestRunner extends events.EventEmitter {
     const args = process.argv.slice(2).filter(x => x !== '--serial');
 
     if (os.platform().startsWith('win32')) {
-      const win32PwBinary = './node_modules/.bin/playwright.cmd';
+      const win32PwBinary = '/node_modules/.bin/playwright.cmd';
 
       this.#testProcess = this.spawn('Test process - Win32',
         win32PwBinary, 'test',
