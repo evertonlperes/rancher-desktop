@@ -48,10 +48,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a libgudev-1.0-0 libsecret-1-0 \
-                             libhyphen0 libgdk-pixbuf2.0-0 libegl1 libgles2 libevent-2.1-6 libnotify4 libxslt1.1 libvpx5 \
+                             libhyphen0 libgdk-pixbuf2.0-0 libegl1 libgles2 libnotify4 libxslt1.1 \
                              gstreamer1.0-gl gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
                              libgbm1 xvfb
-          sysctl kernel.unprivileged_userns_clone=1
+          sudo sysctl kernel.unprivileged_userns_clone=1
 
       - name: Run E2E Tests - Linux with xvfb
         if: ${{ matrix.os == 'ubuntu-20.04'}}
