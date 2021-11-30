@@ -52,7 +52,7 @@ jobs:
       - name: Getting logs - Linux
         if: ${{ failure() && matrix.os == 'ubuntu-20.04'}}
         run: |
-          zip -r linux-Runner-Logs.zip $HOME/.local/share/rancher-desktop/logs
+          zip -r linux-Runner-Logs.zip $HOME/.local/share/rancher-desktop/logs/*
 
       - uses: actions/upload-artifact@v2
         if: failure() # upload when previous step has failed
