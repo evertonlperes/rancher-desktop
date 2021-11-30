@@ -43,16 +43,26 @@ jobs:
         if: ${{ matrix.os != 'ubuntu-20.04' }}
         run: npm run test:e2e
 
+      - name: Install required packages for Linux
+        if: ${{ matrix.os == 'ubuntu-20.04'}}
+        run: |
+          apt-get update
+          apt-get install -y libwoff1 libopus0 libwebp6 libwebpdemux2 libenchant1c2a libgudev-1.0-0 libsecret-1-0 \
+                             libhyphen0 libgdk-pixbuf2.0-0 libegl1 libgles2 libevent-2.1-6 libnotify4 libxslt1.1 libvpx5 \
+                             gstreamer1.0-gl gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+                             libgbm1 xvfb
+          sysctl kernel.unprivileged_userns_clone=1
+
       - name: Run E2E Tests - Linux with xvfb
         if: ${{ matrix.os == 'ubuntu-20.04'}}
         run: npm run test:e2e:ci:linux
         env:
-          DEBUG: pw*
+          DEBUG: pw:browser*
 
       - name: Getting logs - Linux
         if: ${{ failure() && matrix.os == 'ubuntu-20.04'}}
         run: |
-          zip -r linux-Runner-Logs.zip $HOME/.local/share/rancher-desktop/logs/*
+          zip -r linux-Runner-Logs.zip /home/runner/.local/share/rancher-desktop/logs/*
 
       - uses: actions/upload-artifact@v2
         if: failure() # upload when previous step has failed
