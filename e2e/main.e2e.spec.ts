@@ -23,6 +23,7 @@ test.describe.serial('Rancher Desktop - Main App', () => {
   test.beforeAll(async() => {
     utils = new TestUtils();
     utils.createDefaultSettings();
+
     electronApp = await _electron.launch({
       args: [
         path.join(__dirname, '../'),

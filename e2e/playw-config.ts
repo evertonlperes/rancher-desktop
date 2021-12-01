@@ -10,7 +10,6 @@ const config: Config<PlaywrightTestOptions> = {
   timeout:       process.env.CI ? 700000 : 300000,
   globalTimeout: 700000,
   workers:       process.env.CI ? 1 : undefined,
-  retries:       process.env.CI ? 2 : 0,
   reporter:      'list',
 };
 
