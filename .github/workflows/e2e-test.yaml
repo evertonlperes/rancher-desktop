@@ -49,6 +49,8 @@ jobs:
       - name: Run E2E Tests - ${{ matrix.os }}
         if: ${{ matrix.os != 'ubuntu-20.04' }}
         run: npm run test:e2e
+        env:
+          DEBUG: pw:api*
 
       - name: Install required packages for Linux
         if: startsWith(matrix.os, 'ubuntu-')
@@ -63,8 +65,6 @@ jobs:
       - name: Run E2E Tests - Linux with xvfb
         if: startsWith(matrix.os, 'ubuntu-')
         run: npm run test:e2e:ci:linux
-        env:
-          DEBUG: pw:api*
 
       - uses: actions/upload-artifact@v2
         if: failure() # upload when previous step has failed
