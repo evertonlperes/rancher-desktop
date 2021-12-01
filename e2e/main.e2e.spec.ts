@@ -26,7 +26,6 @@ test.describe.serial('Rancher Desktop - Main App', () => {
     electronApp = await _electron.launch({
       args: [
         path.join(__dirname, '../'),
-        '--no-sandbox',
         '--disable-gpu',
         '--whitelisted-ips=',
         '--disable-dev-shm-usage',
