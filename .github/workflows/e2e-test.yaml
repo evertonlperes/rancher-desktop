@@ -50,8 +50,6 @@ jobs:
       - name: Run E2E Tests - ${{ matrix.os }}
         if: ${{ matrix.os != 'ubuntu-20.04' }}
         run: npm run test:e2e
-        env:
-          DEBUG: pw:*
 
       - name: Install required packages for Linux
         if: startsWith(matrix.os, 'ubuntu-')
