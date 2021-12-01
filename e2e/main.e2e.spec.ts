@@ -25,11 +25,12 @@ test.describe.serial('Rancher Desktop - Main App', () => {
     utils.createDefaultSettings();
     electronApp = await _electron.launch({
       args: [
+        path.join(__dirname, '../'),
         '--no-sandbox',
         '--disable-gpu',
         '--whitelisted-ips=',
         '--disable-dev-shm-usage',
-        path.join(__dirname, '../')]
+      ]
     });
     context = electronApp.context();
 
@@ -64,17 +65,48 @@ test.describe.serial('Rancher Desktop - Main App', () => {
     const k8sPort = page.locator(k8sPortSelector);
     const k8sResetButton = page.locator(k8sResetBtn);
 
+    if (!os.platform().startsWith('win')) {
+      await expect(k8sMemorySlider).toBeVisible();
+      await expect(k8sCpuSlider).toBeVisible();
+    }
+
     await expect(k8sSettingsTitle).toHaveText('Kubernetes Settings');
-    await expect(k8sMemorySlider).toBeVisible();
-    await expect(k8sCpuSlider).toBeVisible();
     await expect(k8sPort).toBeVisible();
     await expect(k8sResetButton).toBeVisible();
   });
 
+  /**
+   * Checking WSL and Port Forwarding - Windows Only
+   */
   if (os.platform().startsWith('win')) {
-    test('should navigate to Port Forwarding anc check elements', async() => {});
-  } else {
-    test('should navigate to Supporting Utilities anc check elements', async() => {
+    test('should navigate to WSL Integration and check elements', async() => {
+      const wslDescriptionSelector = '.description';
+
+      await navigateTo('Integrations');
+      const getWslIntegrationTitle = page.locator(mainTitleSelector);
+      const getWslDescriptionText = page.locator(wslDescriptionSelector);
+
+      await expect(getWslIntegrationTitle).toHaveText('WSL Integration');
+      await expect(getWslDescriptionText).toBeVisible();
+    });
+
+    test('should navigate to Port Forwarding and check elements', async() => {
+      const portForwardingContentSelector = '.content';
+
+      await navigateTo('PortForwarding');
+      const getPortForwardingTitle = page.locator(mainTitleSelector);
+      const getPortForwardingContent = page.locator(portForwardingContentSelector);
+
+      await expect(getPortForwardingTitle).toHaveText('Port Forwarding');
+      await expect(getPortForwardingContent).toBeVisible();
+    });
+  }
+
+  /**
+   * Checking Support Utilities symlink list - macOS/Linux Only
+   */
+  if (!os.platform().startsWith('win')) {
+    test('should navigate to Supporting Utilities and check elements', async() => {
       await navigateTo('Integrations');
       const getSupportTitle = page.locator(mainTitleSelector);
 
