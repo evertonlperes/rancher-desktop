@@ -27,7 +27,7 @@ test.describe.serial('Rancher Desktop - Main App', () => {
     electronApp = await _electron.launch({
       args: [
         path.join(__dirname, '../'),
-        '--disable-gpu',
+        // '--disable-gpu',
         '--whitelisted-ips=',
         '--disable-dev-shm-usage',
         '--enable-logging=stderr',
@@ -144,7 +144,8 @@ async function navigateTo(path: string) {
   try {
     return await Promise.all([
       page.click(`.nav li[item="/${ path }"] a`),
-      page.waitForNavigation({ url: `**/${ path }`, timeout: 60000 })
+      page.waitForNavigation({ url: `**/${ path }`, timeout: 60000 }),
+      page.screenshot({ path: `./page-screenshot-${ path }.png` })
     ]);
   } catch (err) {
     console.log(`Cannot navigate to ${ path }. Error ---> `, err);
