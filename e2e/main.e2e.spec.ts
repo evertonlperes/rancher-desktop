@@ -27,7 +27,7 @@ test.describe.serial('Rancher Desktop - Main App', () => {
     electronApp = await _electron.launch({
       args: [
         path.join(__dirname, '../'),
-        // '--disable-gpu',
+        '--disable-gpu',
         '--whitelisted-ips=',
         '--disable-dev-shm-usage',
         '--enable-logging=stderr',
@@ -55,7 +55,7 @@ test.describe.serial('Rancher Desktop - Main App', () => {
     const progressBarSelector = page.locator('.progress');
 
     await progressBarSelector.waitFor({ state: 'detached', timeout: 60000 });
-    expect(progressBarSelector).toBeHidden();
+    await expect(progressBarSelector).toBeHidden();
   });
 
   test('should navigate to Kubernetes Settings and check elements', async() => {
