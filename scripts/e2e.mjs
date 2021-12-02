@@ -70,7 +70,7 @@ class E2ETestRunner extends events.EventEmitter {
           console.log(`Rancher Desktop: main process exited with signal ${ signal }`);
           reject(signal);
         } else {
-          resolve(process.exit());
+          resolve(process.exit(0));
         }
       });
     });

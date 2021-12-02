@@ -30,14 +30,14 @@ test.describe.serial('Rancher Desktop - Main App', () => {
         '--disable-gpu',
         '--whitelisted-ips=',
         '--disable-dev-shm-usage',
+        '--enable-logging=stderr',
+        '--v=1',
       ]
     });
     context = electronApp.context();
 
     await context.tracing.start({ screenshots: true, snapshots: true });
     page = await electronApp.firstWindow();
-
-    await page.screenshot({ path: './first_window.png' });
   });
 
   test.afterAll(async() => {
