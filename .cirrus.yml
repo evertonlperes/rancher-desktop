@@ -1,7 +1,7 @@
 task:
   trigger_type: manual
   matrix:
-    - name: Linux - RD E2E/Integration Tests
+    - name: E2E/Integration Tests
       timeout_in: 45
       container:
         image: ubuntu:20.04
@@ -25,7 +25,6 @@ task:
 
   build_script: |
     chown -R ranchertest:ranchertest /home/ranchertest
-    chown -R ranchertest:ranchertest /dev/kvm
     sudo -iu ranchertest npm ci
 
   test_script: |
