@@ -5,12 +5,12 @@ task:
       timeout_in: 45
       container:
         image: ubuntu:20.04
-        kvm: 'true' # required for E2E/Integrations tests
+        kvm: true # required for E2E/Integrations tests
         cpu: 4
         memory: 8G
       env:
         DEBIAN_FRONTEND: noninteractive
-        CI: 'true'
+        CI: true
         FORCE_COLOR: 1 # force terminal color
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # it won't install all pw browsers
       install_deps_script: |
