@@ -11,9 +11,11 @@ task:
       env:
         DEBIAN_FRONTEND: noninteractive
         CI: 'true'
+        FORCE_COLOR: 1 # force terminal color
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # it won't install all pw browsers
       install_deps_script: |
         apt-get update
-        apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo
+        apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim
         curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
         apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
 
@@ -25,11 +27,12 @@ task:
   build_script: |
     chown -R ranchertest:ranchertest /home/ranchertest
     chown -R ranchertest:ranchertest /dev/kvm
-    sudo -iu ranchertest npm ci
+    sudo -iu ranchertest DEBUG=pw:install npm ci
+    sudo -iu npx playwright install-deps
 
   test_script: |
     export KUBECONFIG=/home/ranchertest/.kube/config
-    sudo -iu ranchertest npm run test:e2e
+    sudo -iu ranchertest xvfb-run --auto-servernum -- npm run test:e2e
 
   on_failure:
     logs_artifacts:
