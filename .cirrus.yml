@@ -28,7 +28,7 @@ task:
     chown -R ranchertest:ranchertest /home/ranchertest
     chown -R ranchertest:ranchertest /dev/kvm
     sudo -iu ranchertest DEBUG=pw:install npm ci
-    sudo -iu npx playwright install-deps
+    sudo -iu ranchertest npx playwright install-deps
 
   test_script: |
     export KUBECONFIG=/home/ranchertest/.kube/config
