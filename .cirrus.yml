@@ -19,12 +19,12 @@ task:
 
   # Tests should run as non-root user - setting up a test user
   prepate_user_script: |
-    groupadd -g $(stat -c '%g' /dev/kvm) kvm
     useradd -m -G kvm ranchertest
     cp -rf . /home/ranchertest
 
   build_script: |
     chown -R ranchertest:ranchertest /home/ranchertest
+    chown -R ranchertest:ranchertest /dev/kvm
     sudo -iu ranchertest npm ci
 
   test_script: |
