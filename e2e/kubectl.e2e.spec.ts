@@ -56,6 +56,8 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
     const output = await tools.kubectl('cluster-info');
+
+    console.log('k8s cluster info --> ', output);
     const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
 
     expect(filteredOutput).toMatch(/is running at ./);
