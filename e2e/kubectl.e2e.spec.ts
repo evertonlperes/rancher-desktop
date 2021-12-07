@@ -55,7 +55,7 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
-    if (process.env.CI) {
+    if (process.env.CIRRUS_OS === 'linux') {
       console.log('Waiting for services - CI take a while to load...');
       await utils.delay(200_000);
     }
