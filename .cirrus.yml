@@ -36,7 +36,7 @@ task:
         sudo -iu ranchertest npx playwright install-deps
       test_script: |
         export KUBECONFIG=/home/ranchertest/.kube/config
-        sudo -iu ranchertest CI=1 DEBUG=pw:browser* xvfb-run --auto-servernum -- npm run test:e2e
+        sudo -iu ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
       on_failure:
         logs_artifacts:
           path: ./home/ranchertest/e2e/reports/*.png
