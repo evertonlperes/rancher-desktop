@@ -24,22 +24,22 @@ task:
         libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 \
         libxtst6 ca-certificates fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils wget
 
-  # Tests should run as non-root user - setting up a test user
-  prepate_user_script: |
-    groupadd -g $(stat -c '%g' /dev/kvm) kvm
-    useradd -m -G kvm ranchertest
-    cp -rf . /home/ranchertest
-  build_script: |
-    chown -R ranchertest:ranchertest /home/ranchertest
-    chown -R ranchertest:ranchertest /dev/kvm
-    sudo -iu ranchertest DEBUG=pw:install npm install
-    sudo -iu ranchertest npx playwright install-deps
-  test_script: |
-    export KUBECONFIG=/home/ranchertest/.kube/config
-    sudo -iu ranchertest xvfb-run --auto-servernum -- npm run test:e2e
-  on_failure:
-    logs_artifacts:
-      path: ./home/ranchertest/e2e/reports/*.png
-      type: image/png
-      format: zip
+      # Tests should run as non-root user - setting up a test user
+      prepate_user_script: |
+        groupadd -g $(stat -c '%g' /dev/kvm) kvm
+        useradd -m -G kvm ranchertest
+        cp -rf . /home/ranchertest
+      build_script: |
+        chown -R ranchertest:ranchertest /home/ranchertest
+        chown -R ranchertest:ranchertest /dev/kvm
+        sudo -iu ranchertest DEBUG=pw:install npm install
+        sudo -iu ranchertest npx playwright install-deps
+      test_script: |
+        export KUBECONFIG=/home/ranchertest/.kube/config
+        sudo -iu ranchertest xvfb-run --auto-servernum -- npm run test:e2e
+      on_failure:
+        logs_artifacts:
+          path: ./home/ranchertest/e2e/reports/*.png
+          type: image/png
+          format: zip
 
