@@ -55,6 +55,8 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
+    console.log('Debug time - START');
+    await utils.delay(800_000);
     const output = await tools.kubectl('cluster-info');
 
     console.log('k8s cluster info --> ', output);
