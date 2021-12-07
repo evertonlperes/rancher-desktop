@@ -50,13 +50,15 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
   test('should start loading the background services', async() => {
     const progressBarSelector = page.locator('.progress');
 
-    await progressBarSelector.waitFor({ state: 'detached', timeout: 60_000 });
+    await progressBarSelector.waitFor({ state: 'detached', timeout: 300_000 });
     await expect(progressBarSelector).toBeHidden();
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
-    console.log('Debug time - START');
-    await utils.delay(800_000);
+    if (process.env.CI) {
+      console.log('Waiting for services - CI take a while to load...');
+      await utils.delay(200_000);
+    }
     const output = await tools.kubectl('cluster-info');
 
     console.log('k8s cluster info --> ', output);
