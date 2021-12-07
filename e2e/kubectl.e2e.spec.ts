@@ -55,13 +55,14 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
+    // CI take longer than local env to start up
+    // giving it some time to proper start the background services
     if (process.env.CI) {
       console.log('Waiting for services - CI take a while to load...');
       await utils.delay(200_000);
     }
     const output = await tools.kubectl('cluster-info');
 
-    console.log('k8s cluster info --> ', output);
     const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
 
     expect(filteredOutput).toMatch(/is running at ./);
