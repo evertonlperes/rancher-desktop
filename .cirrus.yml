@@ -39,4 +39,7 @@ task:
     sudo -iu ranchertest xvfb-run --auto-servernum -- npm run test:e2e
   on_failure:
     logs_artifacts:
-      path: ./home/ranchertest/e2e/reports/*
+      path: ./home/ranchertest/e2e/reports/*.png
+      type: image/png
+      format: zip
+
