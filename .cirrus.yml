@@ -54,7 +54,7 @@ task:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
       install_deps_script: |
         zypper in -y \
-        ca-certificates curl wget git go1.16 make sudo vim nodejs14
+        ca-certificates curl wget git go1.16 make sudo vim nodejs14 npm
         node -v && npm -v
 
       # Tests should run as non-root user - setting up a test user
@@ -73,4 +73,4 @@ task:
   
   always:
     pwtrace_artifacts:
-      path: "e2e/reports/*"
+      path: "home/ranchertest/e2e/reports/**"
