@@ -1,7 +1,7 @@
 task:
   trigger_type: manual
   matrix:
-    - name: E2E/Integration Tests - Ubuntu
+    - name: Linux - E2E/Integration Tests
       timeout_in: 60
       container:
         image: ubuntu:20.04
@@ -10,7 +10,6 @@ task:
         memory: 8G
       env:
         DEBIAN_FRONTEND: noninteractive
-        CI: true
         FORCE_COLOR: 1 # force terminal color
         CIRRUS_CLONE_DEPTH: 0 # Required to get app version
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
@@ -36,41 +35,7 @@ task:
         sudo -iu ranchertest npx playwright install-deps
       test_script: |
         export KUBECONFIG=/home/ranchertest/.kube/config
-        sudo -iu ranchertest CI=1 DEBUG=pw:browser*,pw:api* xvfb-run --auto-servernum -- npm run test:e2e
-
-
-    - name: E2E/Integration Tests - openSUSE Leap
-      timeout_in: 60
-      container:
-        image: opensuse/leap:15.3
-        kvm: true # required for E2E/Integrations tests
-        cpu: 4
-        memory: 8G
-      env:
-        DEBIAN_FRONTEND: noninteractive
-        CI: true
-        FORCE_COLOR: 1 # force terminal color
-        CIRRUS_CLONE_DEPTH: 0 # Required to get app version
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
-      install_deps_script: |
-        zypper in -y \
-        ca-certificates curl wget git go1.16 make sudo vim nodejs14 npm
-        node -v && npm -v
-
-      # Tests should run as non-root user - setting up a test user
-      prepate_user_script: |
-        groupadd -g $(stat -c '%g' /dev/kvm) kvm
-        useradd -m -G kvm ranchertest
-        cp -rf . /home/ranchertest
-      build_script: |
-        chown -R ranchertest: /home/ranchertest
-        chown -R ranchertest: /dev/kvm
-        sudo -iu ranchertest DEBUG=pw:install npm install
-        sudo -iu ranchertest npx playwright install-deps
-      test_script: |
-        export KUBECONFIG=/home/ranchertest/.kube/config
-        sudo -iu ranchertest CI=1 DEBUG=pw:browser*,pw:api* xvfb-run --auto-servernum -- npm run test:e2e
-  
+        sudo -iu ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
   always:
     pwtrace_artifacts:
       path: "home/ranchertest/e2e/reports/**"
