@@ -39,7 +39,5 @@ task:
         sudo -iu ranchertest CI=1 xvfb-run --auto-servernum -- node scripts/e2e.mjs e2e/kubectl.e2e.spec.ts
       always:
         pwtrace_artifacts:
-          path: /home/ranchertest/e2e/reports/pw-trace.zip
-          type: application/zip
-          format: zip
+          path: "/home/ranchertest/e2e/reports/**"
 
