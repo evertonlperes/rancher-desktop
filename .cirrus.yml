@@ -1,7 +1,7 @@
 task:
   trigger_type: manual
   matrix:
-    - name: E2E/Integration Tests
+    - name: E2E/Integration Tests - Ubuntu
       timeout_in: 60
       container:
         image: ubuntu:20.04
@@ -36,8 +36,47 @@ task:
         sudo -iu ranchertest npx playwright install-deps
       test_script: |
         export KUBECONFIG=/home/ranchertest/.kube/config
-        sudo -iu ranchertest CI=1 DEBUG=pw:* xvfb-run --auto-servernum -- npm run test:e2e
-      always:
-        pwtrace_artifacts:
-          path: "e2e/reports/*"
+        sudo -iu ranchertest CI=1 DEBUG=pw:browser*;pw:api* xvfb-run --auto-servernum -- npm run test:e2e
 
+
+    - name: E2E/Integration Tests - openSUSE Leap
+      timeout_in: 60
+      container:
+        image: opensuse/leap:15.3
+        kvm: true # required for E2E/Integrations tests
+        cpu: 4
+        memory: 8G
+      env:
+        DEBIAN_FRONTEND: noninteractive
+        CI: true
+        FORCE_COLOR: 1 # force terminal color
+        CIRRUS_CLONE_DEPTH: 0 # Required to get app version
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
+      install_deps_script: |
+        zypper in -y \
+        ca-certificates gcc g++ curl wget git golang openssh-client make netcat sudo vim \
+        nodejs14 \
+        xvfb gconf-service libasound2 libatk1.0-0 libc6 libcairo2 libcups2 \
+        libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 \
+        libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 \
+        libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 \
+        libxtst6 ca-certificates fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils
+        node -v && npm -v
+
+      # Tests should run as non-root user - setting up a test user
+      prepate_user_script: |
+        groupadd -g $(stat -c '%g' /dev/kvm) kvm
+        useradd -m -G kvm ranchertest
+        cp -rf . /home/ranchertest
+      build_script: |
+        chown -R ranchertest:ranchertest /home/ranchertest
+        chown -R ranchertest:ranchertest /dev/kvm
+        sudo -iu ranchertest DEBUG=pw:install npm install
+        sudo -iu ranchertest npx playwright install-deps
+      test_script: |
+        export KUBECONFIG=/home/ranchertest/.kube/config
+        sudo -iu ranchertest CI=1 DEBUG=pw:browser*;pw:api* xvfb-run --auto-servernum -- npm run test:e2e
+  
+  always:
+    pwtrace_artifacts:
+      path: "e2e/reports/*"
