@@ -6,8 +6,8 @@ task:
       container:
         image: ubuntu:20.04
         kvm: true # required for E2E/Integrations tests
-        cpu: 4
-        memory: 8G
+        cpu: 8
+        memory: 16G
       env:
         DEBIAN_FRONTEND: noninteractive
         FORCE_COLOR: 1 # force terminal color
