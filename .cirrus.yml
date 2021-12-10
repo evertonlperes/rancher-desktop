@@ -4,7 +4,7 @@ task:
     - name: Linux - E2E/Integration Tests
       timeout_in: 60
       container:
-        image: ubuntu:20.04
+        image: node:14.18.2
         kvm: true # required for E2E/Integrations tests
         cpu: 8
         memory: 16G
