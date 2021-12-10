@@ -35,7 +35,7 @@ task:
         sudo -iu ranchertest npx playwright install-deps
       test_script: |
         export KUBECONFIG=/home/ranchertest/.kube/config
-        sudo -iu ranchertest CI=1 DEBUG=pw* DEBUG_FILE=pw-log.txt xvfb-run --auto-servernum -- npm run test:e2e
+        sudo -iu ranchertest CI=1 DEBUG=pw* DEBUG_FILE=pw-log.txt xvfb-run --auto-servernum -- npm run test:e2e:full
   always:
     pwtrace_artifacts:
       path: "/home/ranchertest/pw-log.txt"

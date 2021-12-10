@@ -28,7 +28,9 @@
     "test:unit:watch": "npm run test:unit -- --watch",
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
     "test:unit:wsl-helper": "cd ./src/go/wsl-helper/ && go generate ./... && go test ./...",
-    "test:e2e": "node ./scripts/e2e.mjs",
+    "test:e2e:full": "npm run test:e2e && npm run test:integration",
+    "test:e2e": "node ./scripts/e2e.mjs --grep @e2e",
+    "test:integration": "node ./scripts/e2e.mjs --grep @integration",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node ./scripts/postinstall.mjs",
     "postuninstall": "electron-builder install-app-deps"

@@ -10,7 +10,7 @@ import * as tools from './utils/ToolsUtils';
 let page: Page;
 const defaultReportFolder = path.join(__dirname, 'reports/');
 
-test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
+test.describe.serial('Rancher Desktop - K8s Deploy Test @integration', () => {
   let mainTitle: Locator;
   let utils: TestUtils;
   let electronApp: ElectronApplication;
