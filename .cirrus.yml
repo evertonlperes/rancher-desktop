@@ -38,6 +38,6 @@ task:
         sudo -iu ranchertest CI=1 DEBUG=pw* DEBUG_FILE=pw-log.txt xvfb-run --auto-servernum -- npm run test:e2e
   always:
     pwtrace_artifacts:
-      path: "home/ranchertest/pw-log.txt"
+      path: "/home/ranchertest/pw-log.txt"
       type: text/plain
       format: txt
