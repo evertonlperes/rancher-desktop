@@ -23,13 +23,11 @@ task:
   prepate_user_script: |
     useradd -m -G kvm ranchertest
     cp -rf . /home/ranchertest
+    chown -R ranchertest.ranchertest /home/ranchertest
 
   node_modules_cache:
     folder: /home/ranchertest/node_modules
     populate_script: |
-      chown -R ranchertest:ranchertest /home/ranchertest
-      chown -R ranchertest:ranchertest /home/ranchertest/e2e/reports
-      chown -R ranchertest:ranchertest /dev/kvm
       sudo -iu ranchertest DEBUG=pw:install npm ci
       sudo -iu ranchertest ./node_modules/.bin/playwright install-deps
 
