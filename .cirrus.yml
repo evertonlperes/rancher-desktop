@@ -40,7 +40,7 @@ task:
     custom_script: |
       cp -R /home/ranchertest/e2e/reports/ .
     logs_artifacts:
-      path: "$CIRRUS_WORKING_DIR/reports/*"
+      path: "$(CIRRUS_WORKING_DIR)/reports/*"
 
 
 
