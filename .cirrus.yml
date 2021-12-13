@@ -35,9 +35,12 @@ task:
     export KUBECONFIG=/home/ranchertest/.kube/config
     sudo -iu ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
 
-  on_failure:
+  always: # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
+  # on_failure:
+    custom_script: |
+      cp -R /home/ranchertest/e2e/reports/ .
     logs_artifacts:
-      path: "/home/ranchertest/e2e/reports/*"
+      path: "$CIRRUS_WORKING_DIR/reports/*"
 
 
 
