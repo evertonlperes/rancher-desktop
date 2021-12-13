@@ -20,12 +20,11 @@ task:
     apt-get update
     apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim gpg \
                     libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
-    curl -sLf -o /dev/null "https://deb.nodesource.com/"$NODE_VERSION"/dists/hirsute/Release"
+    curl -sLf -o /dev/null "https://deb.nodesource.com/"$NODE_VERSION"/dists/"$DISTRO"/Release"
     curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee "$KEYRING" >/dev/null
     echo "deb [signed-by="$KEYRING"] https://deb.nodesource.com/"$NODE_VERSION" "$DISTRO" main" > /etc/apt/sources.list.d/nodesource.list
     echo "deb-src [signed-by="$KEYRING"] https://deb.nodesource.com/"$NODE_VERSION" "$DISTRO" main" >> /etc/apt/sources.list.d/nodesource.list
     apt-get update && apt-get install -y  nodejs && node -v && npm -v
-
   # Tests should run as non-root user - setting up a test user
   prepate_user_script:
     - groupadd -g $(stat -c '%g' /dev/kvm) kvm
@@ -38,59 +37,12 @@ task:
     populate_script:
       - sudo -iu ranchertest DEBUG=pw:install npm ci
       - sudo -iu ranchertest ./node_modules/.bin/playwright install-deps
+
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config
-    - sudo -iu ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
+    - sudo -iu ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e:full
 
-  always: # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
-  # on_failure:
-    custom_script: cp -R /home/ranchertest/e2e/reports/ .
+  on_failure: 
+    custom_script: cp -R /home/ranchertest/e2e/reports/ . # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
     logs_artifacts:
       path: "/reports/*"
-
-
-
-# task:
-#   trigger_type: manual
-#   matrix:
-#     - name: Linux - E2E/Integration Tests
-#       timeout_in: 60
-#       container:
-#         image: node:14.18.2
-#         kvm: true # required for E2E/Integrations tests
-#         cpu: 8
-#         memory: 16G
-#       env:
-#         DEBIAN_FRONTEND: noninteractive
-#         FORCE_COLOR: 1 # force terminal color
-#         CIRRUS_CLONE_DEPTH: 0 # Required to get app version
-#         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
-#       install_deps_script: |
-#         apt-get update
-#         apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim
-#         node --version && npm -v
-#         apt-get install -y xvfb gconf-service libasound2 libatk1.0-0 libc6 libcairo2 libcups2 \
-#         libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 \
-#         libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 \
-#         libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 \
-#         libxtst6 ca-certificates fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils wget
-
-#       # Tests should run as non-root user - setting up a test user
-#       prepate_user_script: |
-#         cp /bin/tar /usr/bin/tar
-#         groupadd -g $(stat -c '%g' /dev/kvm) kvm
-#         useradd -m -G kvm ranchertest
-#         cp -rf . /home/ranchertest
-#       build_script: |
-#         chown -R ranchertest:ranchertest /home/ranchertest
-#         chown -R ranchertest:ranchertest /dev/kvm
-#         sudo -iu ranchertest DEBUG=pw:install npm install
-#         sudo -iu ranchertest npx playwright install-deps
-#       test_script: |
-#         export KUBECONFIG=/home/ranchertest/.kube/config
-#         sudo -iu ranchertest CI=1 DEBUG=pw:browser*,pw:api* DEBUG_FILE=pw-log.txt xvfb-run --auto-servernum -- npm run test:e2e:full
-#   always:
-#     pwtrace_artifacts:
-#       path: "/home/ranchertest/pw-log.txt"
-#       type: text/plain
-#       format: txt
