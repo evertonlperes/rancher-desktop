@@ -16,8 +16,12 @@ task:
   install_deps_script: |
     apt-get update
     apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim
-    curl -fsSL https://deb.nodesource.com/setup_14.x | sudo -E bash - && apt-get install -y nodejs && node -v && npm -v
-    apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+    curl -sLf -o /dev/null 'https://deb.nodesource.com/node_14.x/dists/hirsute/Release'
+    curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee /usr/share/keyrings/nodesource.gpg >/dev/null
+    echo 'deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_14.x hirsute main' > /etc/apt/sources.list.d/nodesource.list
+    echo 'deb-src [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_14.x hirsute main' >> /etc/apt/sources.list.d/nodesource.list
+    apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb nodejs
+    node -v && npm -v
 
   # Tests should run as non-root user - setting up a test user
   prepate_user_script: |
