@@ -27,14 +27,15 @@ task:
   node_modules_cache:
     folder: /home/ranchertest/node_modules
     populate_script: |
-      chown -R ranchertest:ranchertest /home/ranchertest/
+      chown -R ranchertest:ranchertest /home/ranchertest
+      chown -R ranchertest:ranchertest /home/ranchertest/e2e/reports
       chown -R ranchertest:ranchertest /dev/kvm
       sudo -iu ranchertest DEBUG=pw:install npm ci
       sudo -iu ranchertest ./node_modules/.bin/playwright install-deps
 
   test_script: |
     export KUBECONFIG=/home/ranchertest/.kube/config
-    sudo -iu ranchertest xvfb-run --auto-servernum -- npm run test:e2e
+    sudo -iu ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
 
   on_failure:
     logs_artifacts:
