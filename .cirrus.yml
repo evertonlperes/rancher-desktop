@@ -27,25 +27,24 @@ task:
     apt-get update && apt-get install -y  nodejs && node -v && npm -v
 
   # Tests should run as non-root user - setting up a test user
-  prepate_user_script: |
-    useradd -m -G kvm ranchertest
-    cp -rf . /home/ranchertest
-    chown -R ranchertest.ranchertest /home/ranchertest
+  prepate_user_script:
+    - groupadd -g $(stat -c '%g' /dev/kvm) kvm
+    - useradd -m -G kvm ranchertest
+    - cp -rf . /home/ranchertest
+    - chown -R ranchertest.ranchertest /home/ranchertest
 
   node_modules_cache:
     folder: /home/ranchertest/node_modules
-    populate_script: |
-      sudo -iu ranchertest DEBUG=pw:install npm ci
-      sudo -iu ranchertest ./node_modules/.bin/playwright install-deps
-
-  test_script: |
-    export KUBECONFIG=/home/ranchertest/.kube/config
-    sudo -iu ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
+    populate_script:
+      - sudo -iu ranchertest DEBUG=pw:install npm ci
+      - sudo -iu ranchertest ./node_modules/.bin/playwright install-deps
+  test_script:
+    - export KUBECONFIG=/home/ranchertest/.kube/config
+    - sudo -iu ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
 
   always: # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
   # on_failure:
-    custom_script: |
-      cp -R /home/ranchertest/e2e/reports/ .
+    custom_script: cp -R /home/ranchertest/e2e/reports/ .
     logs_artifacts:
       path: "/reports/*"
 
