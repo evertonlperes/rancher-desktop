@@ -61,9 +61,9 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
       await utils.delay(200_000);
     }
     const output = await tools.kubectl('cluster-info');
-    const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
+    // const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
 
-    expect(filteredOutput).toMatch(/is running at ./);
+    expect(output).toMatch(/is running at ./);
   });
 
   test('should create a sample namespace', async() => {
