@@ -58,7 +58,7 @@ task:
 
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config
-    - ${SUDO_NON_ROOT_CMD} CI=1 xvfb-run --auto-servernum -- node scripts/e2e.mjs e2e/kubectl.e2e.spec.ts
+    - ${SUDO_NON_ROOT_CMD} CI=1 xvfb-run --auto-servernum -- npm run test:e2e
 
   on_failure: 
     # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
