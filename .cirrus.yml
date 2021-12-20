@@ -44,17 +44,20 @@ task:
     node --version && npm --version
 
   # Info about Cirrus CI caching see: https://cirrus-ci.org/guide/writing-tasks/#cache-instruction
-  node_modules_cache:
-    folder: /home/ranchertest/node_modules
-    fingerprint_script: cat package-lock.json
-    populate_script:
-      # Passing DEBUG=pw:install in order to verify if all Playwright deps were installed properly
-      - ${SUDO_NON_ROOT_CMD} DEBUG=pw:install npm ci
-      - ${SUDO_NON_ROOT_CMD} ranchertest ./node_modules/.bin/playwright install-deps
+  # node_modules_cache:
+  #   folder: /home/ranchertest/node_modules
+  #   fingerprint_script: cat package-lock.json
+  #   populate_script:
+  #     # Passing DEBUG=pw:install in order to verify if all Playwright deps were installed properly
+  #     - ${SUDO_NON_ROOT_CMD} DEBUG=pw:install npm ci
+  #     - ${SUDO_NON_ROOT_CMD} ranchertest ./node_modules/.bin/playwright install-deps
+
+  install_project_script:
+    - ${SUDO_NON_ROOT_CMD} npm install
 
   # Ensure the tools were installed properly
-  post_install_script:
-    - ${SUDO_NON_ROOT_CMD} node scripts/postinstall.mjs
+  # post_install_script:
+  #   - ${SUDO_NON_ROOT_CMD} node scripts/postinstall.mjs
 
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config

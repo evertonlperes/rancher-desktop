@@ -1,4 +1,3 @@
-import os from 'os';
 import path from 'path';
 import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
@@ -50,13 +49,8 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
   test('should start loading the background services', async() => {
     const progressBarSelector = page.locator('.progress');
 
-    //Deleteme after debug.
-    await page.screenshot({ path: `${ defaultReportFolder }-before-progressbar.png` });
-
     await progressBarSelector.waitFor({ state: 'detached', timeout: 300_000 });
     await expect(progressBarSelector).toBeHidden();
-    //Deleteme after debug.
-    await page.screenshot({ path: `${ defaultReportFolder }-after-progressbar.png` });
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
@@ -64,11 +58,9 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
     // giving it some time to proper start the background services
     if (process.env.CI) {
       console.log('Waiting for services - CI take a while to load...');
-      await utils.delay(500_000);
+      await utils.delay(200_000);
     }
     const output = await tools.kubectl('cluster-info');
-
-    console.log('Cluster info --> ', output);
     const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
 
     expect(filteredOutput).toMatch(/is running at ./);
