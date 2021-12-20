@@ -76,9 +76,9 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
       await tools.kubectl('create', 'namespace', 'rd-nginx-demo');
     } finally {
       const namespaces = (await tools.kubectl('get', 'namespace', '--output=name')).trim();
-      const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
+      // const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
 
-      expect(filteredNamespaces).toContain('rd-nginx-demo');
+      expect(namespaces).toMatch(/rd-nginx-demo/);
     }
   });
   test('should deploy sample nginx server', async() => {
@@ -113,8 +113,8 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
   test('should delete sample namespace', async() => {
     await tools.kubectl('delete', 'namespace', 'rd-nginx-demo');
     const namespaces = (await tools.kubectl('get', 'namespace', '--output=name')).trim();
-    const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
+    // const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
 
-    expect(filteredNamespaces).not.toContain('rd-nginx-demo');
+    expect(namespaces).not.toMatch(/rd-nginx-demo/);
   });
 });
