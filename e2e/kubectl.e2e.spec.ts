@@ -64,7 +64,7 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
     // giving it some time to proper start the background services
     if (process.env.CI) {
       console.log('Waiting for services - CI take a while to load...');
-      await utils.delay(200_000);
+      await utils.delay(500_000);
     }
     const output = await tools.kubectl('cluster-info');
 

@@ -5,8 +5,8 @@ task:
   container:
     image: ubuntu:20.04
     kvm: true # required for E2E/Integrations tests
-    cpu: 6
-    memory: 12G
+    cpu: 8
+    memory: 16G
   env:
     DEBIAN_FRONTEND: noninteractive
     CI: true
@@ -48,7 +48,7 @@ task:
     fingerprint_script: cat package-lock.json
     populate_script:
       # Passing DEBUG=pw:install in order to verify if all Playwright deps were installed properly
-      - sudo --login --user=ranchertest DEBUG=pw:install npm ci 
+      - sudo --login --user=ranchertest DEBUG=pw:install npm install
       - sudo --login --user=ranchertest ranchertest ./node_modules/.bin/playwright install-deps
 
   test_script:
