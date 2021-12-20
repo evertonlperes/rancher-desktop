@@ -50,8 +50,13 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
   test('should start loading the background services', async() => {
     const progressBarSelector = page.locator('.progress');
 
+    //Deleteme after debug.
+    await page.screenshot({ path: `${ defaultReportFolder }-before-progressbar.png` });
+
     await progressBarSelector.waitFor({ state: 'detached', timeout: 300_000 });
     await expect(progressBarSelector).toBeHidden();
+    //Deleteme after debug.
+    await page.screenshot({ path: `${ defaultReportFolder }-after-progressbar.png` });
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
@@ -63,6 +68,7 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
     }
     const output = await tools.kubectl('cluster-info');
 
+    console.log('Cluster info --> ', output);
     const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
 
     expect(filteredOutput).toMatch(/is running at ./);

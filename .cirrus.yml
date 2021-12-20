@@ -1,6 +1,6 @@
 task:
-  trigger_type: manual
-  name: E2E/Integration Tests
+#  trigger_type: manual
+  name: Sandbox - E2E Tests
   timeout_in: 45
   container:
     image: ubuntu:20.04
@@ -53,10 +53,10 @@ task:
 
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config
-    - sudo --login --user=ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
+    - sudo --login --user=ranchertest CI=1 xvfb-run --auto-servernum -- node script/e2e/e2e.mjs e2e/kubectl.e2e.spec.ts
 
   on_failure: 
     # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
     custom_script: cp -R /home/ranchertest/e2e/reports/ .
-    logs_artifacts:
+    pw_artifacts:
       path: "/reports/*"
