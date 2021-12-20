@@ -94,7 +94,7 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
         }
         await utils.delay(5_000);
       }
-      await tools.kubectl('wait', '--for=condition=ready', 'pod', '-l', 'app=nginx', '-n', 'rd-nginx-demo', '--timeout=120s');
+      await tools.kubectl('wait', '--for=condition=ready', 'pod', '-l', 'app=nginx', '-n', 'rd-nginx-demo', '--timeout=200s');
       const podName = (await tools.kubectl('get', 'pods', '--output=name', '-n', 'rd-nginx-demo')).trim();
       const checkAppStatus = await tools.kubectl('exec', '-n', 'rd-nginx-demo', '-it', podName, '--', 'curl', 'localhost');
 
