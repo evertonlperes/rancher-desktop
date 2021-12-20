@@ -15,6 +15,7 @@ task:
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
     KEYRING: /usr/share/keyrings/nodesource.gpg
     NODE_VERSION: node_14.x # set node version e.g: "node_16.x" for Node 16 LTS
+    SUDO_NON_ROOT_CMD: sudo --login --user=ranchertest
 
   # Setting up a non-root user
   prepare_user_script:
@@ -48,14 +49,16 @@ task:
     fingerprint_script: cat package-lock.json
     populate_script:
       # Passing DEBUG=pw:install in order to verify if all Playwright deps were installed properly
-      - sudo --login --user=ranchertest DEBUG=pw:install npm ci
-      # Forcing postinstall
-      - sudo --login --user=ranchertest node scripts/postinstall.mjs
-      - sudo --login --user=ranchertest ranchertest ./node_modules/.bin/playwright install-deps
+      - ${SUDO_NON_ROOT_CMD} DEBUG=pw:install npm ci
+      - ${SUDO_NON_ROOT_CMD} ranchertest ./node_modules/.bin/playwright install-deps
+
+  # Ensure the tools were installed properly
+  post_install_script:
+    - ${SUDO_NON_ROOT_CMD} node scripts/postinstall.mjs
 
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config
-    - sudo --login --user=ranchertest CI=1 xvfb-run --auto-servernum -- node scripts/e2e.mjs e2e/kubectl.e2e.spec.ts
+    - ${SUDO_NON_ROOT_CMD} CI=1 xvfb-run --auto-servernum -- node scripts/e2e.mjs e2e/kubectl.e2e.spec.ts
 
   on_failure: 
     # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
