@@ -1,4 +1,3 @@
-import os from 'os';
 import path from 'path';
 import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
@@ -63,9 +62,7 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
     }
     const output = await tools.kubectl('cluster-info');
 
-    const filteredOutput = output.replaceAll(/\033\[.*?m/g, '');
-
-    expect(filteredOutput).toMatch(/is running at ./);
+    expect(output).toMatch(/is running at ./);
   });
 
   test('should create a sample namespace', async() => {
@@ -78,16 +75,15 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
       await tools.kubectl('create', 'namespace', 'rd-nginx-demo');
     } finally {
       const namespaces = (await tools.kubectl('get', 'namespace', '--output=name')).trim();
-      const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
 
-      expect(filteredNamespaces).toContain('rd-nginx-demo');
+      expect(namespaces).toMatch(/rd-nginx-demo/);
     }
   });
   test('should deploy sample nginx server', async() => {
     try {
       const yamlFilePath = path.join(path.dirname(__dirname), 'e2e', 'assets', 'k8s-deploy-sample', 'nginx-sample-app.yaml');
 
-      const applyTemplate = await tools.kubectl('apply', '-f', yamlFilePath, '-n', 'rd-nginx-demo');
+      await tools.kubectl('apply', '-f', yamlFilePath, '-n', 'rd-nginx-demo');
 
       for (let i = 0; i < 10; i++) {
         const podName = (await tools.kubectl('get', 'pods', '--output=name', '-n', 'rd-nginx-demo')).trim();
@@ -98,7 +94,7 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
         }
         await utils.delay(5_000);
       }
-      await tools.kubectl('wait', '--for=condition=ready', 'pod', '-l', 'app=nginx', '-n', 'rd-nginx-demo', '--timeout=120s');
+      await tools.kubectl('wait', '--for=condition=ready', 'pod', '-l', 'app=nginx', '-n', 'rd-nginx-demo', '--timeout=200s');
       const podName = (await tools.kubectl('get', 'pods', '--output=name', '-n', 'rd-nginx-demo')).trim();
       const checkAppStatus = await tools.kubectl('exec', '-n', 'rd-nginx-demo', '-it', podName, '--', 'curl', 'localhost');
 
@@ -115,8 +111,7 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
   test('should delete sample namespace', async() => {
     await tools.kubectl('delete', 'namespace', 'rd-nginx-demo');
     const namespaces = (await tools.kubectl('get', 'namespace', '--output=name')).trim();
-    const filteredNamespaces = namespaces.replaceAll(/\033\[.*?m/g, '');
 
-    expect(filteredNamespaces).not.toContain('rd-nginx-demo');
+    expect(namespaces).not.toMatch(/rd-nginx-demo/);
   });
 });
