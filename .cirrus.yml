@@ -1,5 +1,12 @@
 task:
-#  trigger_type: manual
+  # Cirrus CI does not start cron task if it has
+  # manual trigger type enabled - expected behaviour
+  # see: https://github.com/cirruslabs/cirrus-ci-docs/discussions/949#discussioncomment-1853964
+  matrix:
+    - trigger_type: automatic
+      only_if: $CIRRUS_CRON != ''
+    - trigger_type: manual
+      only_if: $CIRRUS_CRON == ''
   name: Sandbox - E2E Tests
   timeout_in: 45
   container:
