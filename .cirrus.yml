@@ -4,7 +4,7 @@ task:
   # see: https://github.com/cirruslabs/cirrus-ci-docs/discussions/949#discussioncomment-1853964
   matrix:
     - trigger_type: automatic
-      only_if: $CIRRUS_CRON == '' && $BRANCH == "main"
+      only_if: $CIRRUS_CRON == 'test' && $BRANCH == "main"
     - trigger_type: manual
       only_if: $CIRRUS_CRON != ''
   name: Sandbox - E2E Tests
