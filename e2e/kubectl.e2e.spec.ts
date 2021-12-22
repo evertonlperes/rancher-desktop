@@ -55,7 +55,7 @@ test.describe.serial('K8s Deployment Test', () => {
     // This timeout is related to the time that k8s API takes to start up
     // on background.
     if (process.env.CI) {
-      await util.promisify(setTimeout)(10_000);
+      await util.promisify(setTimeout)(100_000);
     }
     const output = await kubectl('cluster-info');
 
