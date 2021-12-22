@@ -52,6 +52,11 @@ test.describe.serial('K8s Deployment Test', () => {
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
+    // This timeout is related to the time that k8s API takes to start up
+    // on background.
+    if (process.env.CI) {
+      await util.promisify(setTimeout)(10_000);
+    }
     const output = await kubectl('cluster-info');
 
     await expect(output).toMatch(/is running at ./);
