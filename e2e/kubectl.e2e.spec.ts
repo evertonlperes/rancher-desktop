@@ -1,4 +1,5 @@
 import path from 'path';
+import util from 'util';
 import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
 } from 'playwright';
@@ -52,7 +53,18 @@ test.describe.serial('K8s Deployment Test', () => {
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
     const output = await kubectl('cluster-info');
+    // Check if the node is ready.
+    let nodeName = '';
 
+    for (let i = 0; i < 10; i++) {
+      nodeName = (await kubectl('get', 'nodes', '--output=name')).trim();
+      if (nodeName) {
+        break;
+      }
+      await util.promisify(setTimeout)(5_000);
+    }
+    expect(nodeName).not.toBeFalsy();
+    await kubectl('wait', '--for=condition=Ready', nodeName);
     await expect(output).toMatch(/is running at ./);
   });
 
