@@ -977,6 +977,10 @@ ${ commands.join('\n') }
       config = NETWORKS_CONFIG;
     }
 
+    if (config.group === 'staff') {
+      config.group = 'everyone';
+    }
+
     for (const key of Object.keys(config.networks)) {
       if (key.startsWith('bridged_')) {
         delete config.networks[key];
@@ -984,7 +988,7 @@ ${ commands.join('\n') }
     }
 
     for (const hostNetwork of await this.getDarwinHostNetworks()) {
-      // Indiscreminately add all host networks, whether they _currently_ have
+      // Indiscriminately add all host networks, whether they _currently_ have
       // DHCP / IPv4 addresses.
       if (hostNetwork.interface) {
         config.networks[`bridged_${ hostNetwork.interface }`] = {
