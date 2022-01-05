@@ -71,4 +71,4 @@ task:
     # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
     # custom_script: cp -R /home/ranchertest/e2e/reports/ .
     playwright_artifacts:
-      path: "/home/rancher/e2e/reports/*"
+      path: "/home/ranchertest/e2e/reports/*"
