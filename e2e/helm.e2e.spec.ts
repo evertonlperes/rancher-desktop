@@ -47,7 +47,7 @@ test.describe.serial('Helm Deployment Test', () => {
   test('should start loading the background services', async() => {
     const progressBarSelector = page.locator('.progress');
 
-    // Wait until progress bar show up. It takes roughly 60s to start
+    // Wait until progress bar show up. It takes roughly ~60s to start in CI
     await progressBarSelector.waitFor({ state: 'visible', timeout: 200_000 });
     // Wait until progress bar be detached. With that we can make sure the services were started
     await progressBarSelector.waitFor({ state: 'detached', timeout: 300_000 });
