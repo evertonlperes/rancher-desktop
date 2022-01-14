@@ -45,11 +45,11 @@ test.describe.serial('Main App Test', () => {
   test('should land on General page', async({ page }) => {
     const playwrightDev = new PlaywrightDevPage(page);
 
+
     // await playwrightDev.goto('General');
     // mainTitle = page.locator(mainTitleSelector);
 
     // await expect(mainTitle).toHaveText('Welcome to Rancher Desktop');
-
     await playwrightDev.getGeneralPageTile();
   });
 
