@@ -15,6 +15,7 @@ const defaultReportFolder = path.join(__dirname, 'reports/');
  * Playwright executes test in parallel by default and it will not work for our app backend loading process.
  * */
 test.describe.serial('Main App Test', () => {
+
   // let mainTitle: Locator;
   let electronApp: ElectronApplication;
   let context: BrowserContext;
@@ -42,7 +43,7 @@ test.describe.serial('Main App Test', () => {
     await electronApp.close();
   });
 
-  test('should land on General page', async({ page }) => {
+  test('should land on General page', async() => {
     const playwrightDev = new PlaywrightDevPage(page);
 
 
@@ -53,12 +54,14 @@ test.describe.serial('Main App Test', () => {
     await playwrightDev.getGeneralPageTile();
   });
 
-  // test('should start loading the background services and hide progress bar', async() => {
-  //   const progressBarSelector = page.locator('.progress');
+  test('should start loading the background services and hide progress bar', async() => {
+    const playwrightDev = new PlaywrightDevPage(page);
+    // const progressBarSelector = page.locator('.progress');
 
-  //   await progressBarSelector.waitFor({ state: 'detached', timeout: 120_000 });
-  //   await expect(progressBarSelector).toBeHidden();
-  // });
+    // await progressBarSelector.waitFor({ state: 'detached', timeout: 120_000 });
+    // await expect(progressBarSelector).toBeHidden();
+    await playwrightDev.getProgressBar();
+  });
 
   // test('should navigate to Kubernetes Settings and check elements', async() => {
   //   const k8sMemorySliderSelector = '[id="memoryInGBWrapper"]';
