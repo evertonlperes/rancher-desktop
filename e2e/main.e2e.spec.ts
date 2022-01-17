@@ -3,9 +3,12 @@ import path from 'path';
 import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
 } from 'playwright';
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { createDefaultSettings } from './utils/TestUtils';
-import { PlaywrightDevPage } from './playwright-dev-page';
+import { PlaywrightDevPage } from './pages/playwright-main-page';
+import { K8sPage } from './pages/playwright-k8s-page';
+import { WslPage } from './pages/playwright-wsl-page';
+import { PortForwardPage } from './pages/playwright-port-forward-page';
 
 let page: Page;
 const defaultReportFolder = path.join(__dirname, 'reports/');
@@ -15,11 +18,8 @@ const defaultReportFolder = path.join(__dirname, 'reports/');
  * Playwright executes test in parallel by default and it will not work for our app backend loading process.
  * */
 test.describe.serial('Main App Test', () => {
-
-  // let mainTitle: Locator;
   let electronApp: ElectronApplication;
   let context: BrowserContext;
-  const mainTitleSelector = '[data-test="mainTitle"]';
 
   test.beforeAll(async() => {
     createDefaultSettings();
@@ -46,113 +46,78 @@ test.describe.serial('Main App Test', () => {
   test('should land on General page', async() => {
     const playwrightDev = new PlaywrightDevPage(page);
 
-
-    // await playwrightDev.goto('General');
-    // mainTitle = page.locator(mainTitleSelector);
-
-    // await expect(mainTitle).toHaveText('Welcome to Rancher Desktop');
-    await playwrightDev.getGeneralPageTile();
+    await playwrightDev.getGeneralPageTile('Welcome to Rancher Desktop');
   });
 
   test('should start loading the background services and hide progress bar', async() => {
     const playwrightDev = new PlaywrightDevPage(page);
-    // const progressBarSelector = page.locator('.progress');
 
-    // await progressBarSelector.waitFor({ state: 'detached', timeout: 120_000 });
-    // await expect(progressBarSelector).toBeHidden();
     await playwrightDev.getProgressBar();
   });
 
-  // test('should navigate to Kubernetes Settings and check elements', async() => {
-  //   const k8sMemorySliderSelector = '[id="memoryInGBWrapper"]';
-  //   const k8sCpuSliderSelector = '[id="numCPUWrapper"]';
-  //   const k8sPortSelector = '[data-test="portConfig"]';
-  //   const k8sResetBtn = '[data-test="k8sResetBtn"]';
+  test('should navigate to Kubernetes Settings and check elements', async() => {
+    const playwrightDev = new PlaywrightDevPage(page);
+    const k8sPage = new K8sPage(page);
 
-  //   await navigateTo('K8s');
-  //   // Collecting data from selectors
-  //   const k8sSettingsTitle = page.locator(mainTitleSelector);
-  //   const k8sMemorySlider = page.locator(k8sMemorySliderSelector);
-  //   const k8sCpuSlider = page.locator(k8sCpuSliderSelector);
-  //   const k8sPort = page.locator(k8sPortSelector);
-  //   const k8sResetButton = page.locator(k8sResetBtn);
+    await playwrightDev.navigateTo('K8s');
 
-  //   if (!os.platform().startsWith('win')) {
-  //     await expect(k8sMemorySlider).toBeVisible();
-  //     await expect(k8sCpuSlider).toBeVisible();
-  //   }
+    if (!os.platform().startsWith('win')) {
+      await k8sPage.getK8sMemorySlider();
+      await k8sPage.getK8sCpuSlider();
+    }
 
-  //   await expect(k8sSettingsTitle).toHaveText('Kubernetes Settings');
-  //   await expect(k8sPort).toBeVisible();
-  //   await expect(k8sResetButton).toBeVisible();
-  // });
+    await playwrightDev.getGeneralPageTile('Kubernetes Settings');
+    await k8sPage.getK8sPort();
+    await k8sPage.getK8sResetButton();
+  });
 
-  // /**
-  //  * Checking WSL and Port Forwarding - Windows Only
-  //  */
-  // if (os.platform().startsWith('win')) {
-  //   test('should navigate to WSL Integration and check elements', async() => {
-  //     const wslDescriptionSelector = '.description';
+  /**
+   * Checking WSL and Port Forwarding - Windows Only
+   */
+  if (os.platform().startsWith('win')) {
+    test('should navigate to WSL Integration and check elements', async() => {
+      const playwrightDev = new PlaywrightDevPage(page);
+      const wslPage = new WslPage(page);
 
-  //     await navigateTo('Integrations');
-  //     const getWslIntegrationTitle = page.locator(mainTitleSelector);
-  //     const getWslDescriptionText = page.locator(wslDescriptionSelector);
+      await playwrightDev.navigateTo('Integrations');
 
-  //     await expect(getWslIntegrationTitle).toHaveText('WSL Integration');
-  //     await expect(getWslDescriptionText).toBeVisible();
-  //   });
+      await playwrightDev.getGeneralPageTile('WSL Integration');
+      await wslPage.getWslDescription();
+    });
 
-  //   test('should navigate to Port Forwarding and check elements', async() => {
-  //     const portForwardingContentSelector = '.content';
+    test('should navigate to Port Forwarding and check elements', async() => {
+      const playwrightDev = new PlaywrightDevPage(page);
+      const portForwardPage = new PortForwardPage(page);
 
-  //     await navigateTo('PortForwarding');
-  //     const getPortForwardingTitle = page.locator(mainTitleSelector);
-  //     const getPortForwardingContent = page.locator(portForwardingContentSelector);
+      await playwrightDev.navigateTo('PortForwarding');
+      await playwrightDev.getGeneralPageTile('Port Forwarding');
+      await portForwardPage.getPortForwardDescription();
+    });
+  }
 
-  //     await expect(getPortForwardingTitle).toHaveText('Port Forwarding');
-  //     await expect(getPortForwardingContent).toBeVisible();
-  //   });
-  // }
+  /**
+   * Checking Support Utilities symlink list - macOS/Linux Only
+   */
+  if (!os.platform().startsWith('win')) {
+    test('should navigate to Supporting Utilities and check elements', async() => {
+      const playwrightDev = new PlaywrightDevPage(page);
 
-  // /**
-  //  * Checking Support Utilities symlink list - macOS/Linux Only
-  //  */
-  // if (!os.platform().startsWith('win')) {
-  //   test('should navigate to Supporting Utilities and check elements', async() => {
-  //     await navigateTo('Integrations');
-  //     const getSupportTitle = page.locator(mainTitleSelector);
+      await playwrightDev.navigateTo('Integrations');
+      await playwrightDev.getGeneralPageTile('Supporting Utilities');
+    });
+  }
 
-  //     await expect(getSupportTitle).toHaveText('Supporting Utilities');
-  //   });
-  // }
+  test('should navigate to Images page', async() => {
+    const playwrightDev = new PlaywrightDevPage(page);
 
-  // test('should navigate to Images page', async() => {
-  //   const getSupportTitle = page.locator(mainTitleSelector);
+    await playwrightDev.navigateTo('Images');
+    await playwrightDev.getGeneralPageTile('Images');
+  });
 
-  //   await navigateTo('Images');
-  //   await expect(getSupportTitle).toHaveText('Images');
-  // });
+  test('should navigate to Troubleshooting and check elements', async() => {
+    const playwrightDev = new PlaywrightDevPage(page);
 
-  // test('should navigate to Troubleshooting and check elements', async() => {
-  //   const getSupportTitle = page.locator(mainTitleSelector);
-
-  //   await navigateTo('Troubleshooting');
-  //   await expect(getSupportTitle).toHaveText('Troubleshooting');
-  // });
+    await playwrightDev.navigateTo('Troubleshooting');
+    await playwrightDev.getGeneralPageTile('Troubleshooting');
+  });
 });
-
-/**
- * Navigate to a specific tab
- * @param path
- */
-// async function navigateTo(path: string) {
-//   try {
-//     return await Promise.all([
-//       page.click(`.nav li[item="/${ path }"] a`),
-//       page.waitForNavigation({ url: `**/${ path }`, timeout: 60_000 }),
-//       page.screenshot({ path: `${ defaultReportFolder }${ path }-screenshot.png` })
-//     ]);
-//   } catch (err) {
-//     console.log(`Cannot navigate to ${ path }. Error ---> `, err);
-//   }
-// }

@@ -12,12 +12,27 @@ export class PlaywrightDevPage {
       this.progressBarSelector = page.locator('.progress');
     }
 
-    async getGeneralPageTile() {
-      await expect(this.mainTitleSelector).toHaveText('Welcome to Rancher Desktop');
+    // async getGeneralPageTile() {
+    //   await expect(this.mainTitleSelector).toHaveText('Welcome to Rancher Desktop');
+    // }
+
+    async getGeneralPageTile(content: string) {
+      await expect(this.mainTitleSelector).toHaveText(content);
     }
 
     async getProgressBar() {
       await this.progressBarSelector.waitFor({ state: 'detached', timeout: 120_000 });
       await expect(this.progressBarSelector).toBeHidden();
+    }
+
+    async navigateTo(tab: string) {
+      try {
+        return await Promise.all([
+          this.page.click(`.nav li[item="/${ tab }"] a`),
+          this.page.waitForNavigation({ url: `**/${ tab }`, timeout: 60_000 }),
+        ]);
+      } catch (err) {
+        console.log(`Cannot navigate to ${ tab }. Error ---> `, err);
+      }
     }
 }
