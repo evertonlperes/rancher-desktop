@@ -31,9 +31,11 @@ import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
+import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
+import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
-import { isUnixError } from '@/typings/unix.interface';
+import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -144,10 +146,9 @@ interface SPNetworkDataType {
 const console = Logging.lima;
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.2.3';
+const IMAGE_VERSION = '0.2.4';
 const ALPINE_EDITION = 'rd';
 const ALPINE_VERSION = '3.14.3';
-const INTERFACE_NAME = 'rd0';
 
 /** The following files, and their parents up to /, must only be writable by root,
  *  and none of them are allowed to be symlinks (lima-vm requirements).
@@ -202,9 +203,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** The current container engine; changing this requires a full restart. */
   #currentContainerEngine = ContainerEngine.NONE;
 
-  /** The name of the shared lima interface from the config file */
-  #externalInterfaceName = '';
-
   /** Helper object to manage available K3s versions. */
   protected readonly k3sHelper: K3sHelper;
 
@@ -248,6 +246,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected logProcess: childProcess.ChildProcess | null = null;
 
   debug = false;
+
+  emit: K8s.KubernetesBackend['emit'] = this.emit;
 
   get backend(): 'lima' {
     return 'lima';
@@ -514,16 +514,18 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         return n.dhcp && n.IPv4?.Addresses?.some(addr => addr);
       });
 
+      // Always add a shared network interface in case the bridged interface doesn't get an IP address.
+      config.networks = [{
+        lima:      'shared',
+        interface: 'rd1',
+      }];
       if (hostNetwork) {
-        config.networks = [
-          {
-            lima:      `bridged_${ hostNetwork.interface }`,
-            interface: 'rd0',
-          },
-        ];
+        config.networks.push({
+          lima:      `bridged_${ hostNetwork.interface }`,
+          interface: 'rd0',
+        });
       } else {
-        console.log('Could not find any acceptable host networks for bridging; not setting networks.');
-        delete config.networks;
+        console.log('Could not find any acceptable host networks for bridging.');
       }
     }
 
@@ -546,7 +548,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
       }
     }
-    this.#externalInterfaceName = config.networks?.find(entry => (('lima' in entry) && ('interface' in entry)) )?.interface ?? INTERFACE_NAME;
   }
 
   protected updateConfigPortForwards(config: LimaConfiguration) {
@@ -576,7 +577,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
         return yaml.parse(configRaw) as LimaConfiguration;
       } catch (ex) {
-        if (isUnixError(ex) && ex.code === 'ENOENT') {
+        if ((ex as NodeJS.ErrnoException).code === 'ENOENT') {
           return undefined;
         }
       }
@@ -879,7 +880,7 @@ ${ commands.join('\n') }
       }
     } catch (err) {
       dirInfo = null;
-      if (isUnixError(err) && err.code !== 'ENOENT') {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
         console.log(`Unexpected situation with ${ RUN_LIMA_LOCATION }, stat => error ${ err }`, err);
         throw err;
       }
@@ -920,7 +921,7 @@ ${ commands.join('\n') }
         path = await fs.promises.readlink(path);
       }
     } catch (err) {
-      if (isUnixError(err) && err.code !== 'ENOENT') {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
         console.log(`Error trying to resolve symbolic link ${ path }:`, err);
       }
     }
@@ -971,7 +972,7 @@ ${ commands.join('\n') }
         config = NETWORKS_CONFIG;
       }
     } catch (err) {
-      if (isUnixError(err) && err.code !== 'ENOENT') {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
         console.log(`Existing networks.yaml file ${ networkPath } not yaml-parsable, got error ${ err }. It will be replaced.`);
       }
       config = NETWORKS_CONFIG;
@@ -1060,6 +1061,42 @@ ${ commands.join('\n') }
   }
 
   /**
+   * Get IPv4 address for specified interface.
+   */
+  protected async getInterfaceAddr(iface: string) {
+    try {
+      const ipAddr = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME,
+        'ip', '--family', 'inet', 'addr', 'show', iface);
+      const match = ipAddr.match(' inet ([0-9.]+)');
+
+      return match ? match[1] : '';
+    } catch (ex: any) {
+      console.error(`Could not get address for ${ iface }: ${ ex?.stderr || ex }`);
+
+      return '';
+    }
+  }
+
+  /**
+   * Display dialog to explain that bridged networking is not available.
+   */
+  protected noBridgedNetworkDialog(sharedIP: string) {
+    const options: Electron.NotificationConstructorOptions = {
+      title: 'Bridged network did not get an IP address.',
+      body:  `Using shared network address ${ sharedIP }`,
+      icon:  'info',
+    };
+
+    if (!sharedIP) {
+      options.body = "Shared network isn't available either. Only network access is via port forwarding to the host.";
+    }
+
+    this.emit('show-notification', options);
+
+    return Promise.resolve();
+  }
+
+  /**
    * Write the openrc script for k3s.
    */
   protected async writeServiceScript() {
@@ -1069,14 +1106,29 @@ ${ commands.join('\n') }
     };
 
     if (os.platform() === 'darwin') {
-      // Check if we have a bridged network
-      if ((await this.currentConfig)?.networks?.some(n => n.interface === 'rd0')) {
+      const bridgedIP = await this.getInterfaceAddr('rd0');
+
+      if (bridgedIP) {
         config.ADDITIONAL_ARGS = '--flannel-iface rd0';
+        console.log(`Using ${ bridgedIP } on bridged network rd0`);
+      } else {
+        const sharedIP = await this.getInterfaceAddr('rd1');
+
+        await this.noBridgedNetworkDialog(sharedIP);
+        if (sharedIP) {
+          config.ADDITIONAL_ARGS = '--flannel-iface rd1';
+          console.log(`Using ${ sharedIP } on shared network rd1`);
+        } else {
+          config.ADDITIONAL_ARGS = '--flannel-iface eth0';
+          console.log(`Neither bridged network rd0 nor shared network rd1 have an IPv4 address`);
+        }
       }
     }
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', config);
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
+    await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
+    await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
   }
 
   /**
@@ -1314,6 +1366,34 @@ ${ commands.join('\n') }
             }
           });
 
+        // We can't install buildkitd earlier because if we were running an older version of rancher-desktop,
+        // we have to remove the kim buildkitd k8s artifacts. And we can't remove them until k8s is running.
+        // Note that if the user's workflow is:
+        // A. Only containerd
+        // settings version 3: containerd (which installs buildkitd)
+        // upgrade to settings version 4, still on containerd:
+        //   - remove the old kim/buildkitd artifacts
+        //   - set config.kubernetes.checkForExistingKimBuilder to false (forever)
+
+        // B. Mix of containerd and moby
+        // settings version 3: containerd (which installs buildkitd)
+        // settings version 3: switch to moby (which will uninstall buildkitd)
+        // upgrade to settings version 4, still on moby: do nothing here
+        // settings version 4, switch to containerd
+        //   - config.kubernetes.checkForExistingKimBuilder should be true, but there are no kim/buildkitd artifacts
+        //   - do nothing, and set config.kubernetes.checkForExistingKimBuilder to false (forever)
+
+        if (config.checkForExistingKimBuilder) {
+          this.client ??= new K8s.Client();
+          await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
+          // No need to remove kim builder components ever again.
+          config.checkForExistingKimBuilder = false;
+          this.emit('kim-builder-uninstalled');
+        }
+        if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
+          await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
+        }
+
         this.setState(K8s.State.STARTED);
       } catch (err) {
         console.error('Error starting lima:', err);
@@ -1383,6 +1463,8 @@ ${ commands.join('\n') }
         if (defined(status) && status.status === 'Running') {
           await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
           await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
+          // Always stop it, even if we're on MOBY, in case it got started for some reason.
+          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
           await this.lima('stop', MACHINE_NAME);
         }
         this.setState(K8s.State.STOPPED);
