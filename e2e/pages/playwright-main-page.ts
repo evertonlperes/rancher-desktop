@@ -12,15 +12,14 @@ export class PlaywrightDevPage {
       this.progressBarSelector = page.locator('.progress');
     }
 
-    // async getGeneralPageTile() {
-    //   await expect(this.mainTitleSelector).toHaveText('Welcome to Rancher Desktop');
-    // }
-
     async getGeneralPageTile(content: string) {
       await expect(this.mainTitleSelector).toHaveText(content);
     }
 
     async getProgressBar() {
+      // Wait until progress bar show up. It takes roughly ~60s to start in CI
+      await this.progressBarSelector.waitFor({ state: 'visible', timeout: 200_000 });
+      // Wait until progress bar be detached. With that we can make sure the services were started
       await this.progressBarSelector.waitFor({ state: 'detached', timeout: 120_000 });
       await expect(this.progressBarSelector).toBeHidden();
     }

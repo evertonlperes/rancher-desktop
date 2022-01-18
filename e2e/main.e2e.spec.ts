@@ -4,14 +4,13 @@ import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
 } from 'playwright';
 import { test } from '@playwright/test';
-import { createDefaultSettings } from './utils/TestUtils';
+import { createDefaultSettings, playwrightReportAssets } from './utils/TestUtils';
 import { PlaywrightDevPage } from './pages/playwright-main-page';
 import { K8sPage } from './pages/playwright-k8s-page';
 import { WslPage } from './pages/playwright-wsl-page';
 import { PortForwardPage } from './pages/playwright-port-forward-page';
 
 let page: Page;
-const defaultReportFolder = path.join(__dirname, 'reports/');
 
 /**
  * Using test.describe.serial make the test execute step by step, as described on each `test()` order
@@ -39,7 +38,7 @@ test.describe.serial('Main App Test', () => {
   });
 
   test.afterAll(async() => {
-    await context.tracing.stop({ path: path.join(defaultReportFolder, 'pw-trace.zip') });
+    await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
     await electronApp.close();
   });
 

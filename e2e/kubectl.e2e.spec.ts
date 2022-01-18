@@ -3,17 +3,14 @@ import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
 } from 'playwright';
 import { test, expect } from '@playwright/test';
-import { createDefaultSettings, kubectl } from './utils/TestUtils';
+import { createDefaultSettings, kubectl, playwrightReportAssets } from './utils/TestUtils';
+import { PlaywrightDevPage } from './pages/playwright-main-page';
 
 let page: Page;
-const defaultReportFolder = path.join(__dirname, 'reports/');
 
 test.describe.serial('K8s Deployment Test', () => {
-  let mainTitle: Locator;
   let electronApp: ElectronApplication;
   let context: BrowserContext;
-
-  const mainTitleSelector = '[data-test="mainTitle"]';
 
   test.beforeAll(async() => {
     createDefaultSettings();
@@ -33,27 +30,20 @@ test.describe.serial('K8s Deployment Test', () => {
   });
 
   test.afterAll(async() => {
-    await context.tracing.stop({ path: path.join(defaultReportFolder, 'pw-trace.zip') });
+    await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
     await electronApp.close();
   });
 
-  test('should load Rancher Desktop App', async() => {
-    mainTitle = page.locator(mainTitleSelector);
-
-    await expect(mainTitle).toHaveText('Welcome to Rancher Desktop');
-  });
-
   test('should start loading the background services', async() => {
-    const progressBarSelector = page.locator('.progress');
+    const playwrightDev = new PlaywrightDevPage(page);
 
-    await progressBarSelector.waitFor({ state: 'detached', timeout: 300_000 });
-    await expect(progressBarSelector).toBeHidden();
+    await playwrightDev.getProgressBar();
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
     const output = await kubectl('cluster-info');
 
-    await expect(output).toMatch(/is running at ./);
+    expect(output).toMatch(/is running at ./);
   });
 
   test('should create a sample namespace', async() => {
@@ -64,7 +54,7 @@ test.describe.serial('K8s Deployment Test', () => {
     const namespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
     const testNamespace = namespaces.split('\n');
 
-    await expect(testNamespace).toContain('namespace/rd-nginx-demo');
+    expect(testNamespace).toContain('namespace/rd-nginx-demo');
   });
   test('should deploy sample nginx server', async() => {
     try {
@@ -76,8 +66,8 @@ test.describe.serial('K8s Deployment Test', () => {
       const podName = (await kubectl('get', 'pods', '--output=name', '--namespace', 'rd-nginx-demo')).trim();
       const checkAppStatus = await kubectl('exec', '--namespace', 'rd-nginx-demo', '-it', podName, '--', 'curl', '--fail', 'localhost');
 
-      await expect(await kubectl('get', 'pods', '--output=name', '--namespace', 'rd-nginx-demo')).toBeTruthy();
-      await expect(checkAppStatus).toContain('Welcome to nginx!');
+      expect(await kubectl('get', 'pods', '--output=name', '--namespace', 'rd-nginx-demo')).toBeTruthy();
+      expect(checkAppStatus).toContain('Welcome to nginx!');
     } catch (err:any) {
       console.error('Error: ');
       console.error(`stdout: ${ err.stdout }`);
@@ -91,6 +81,6 @@ test.describe.serial('K8s Deployment Test', () => {
     const namespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
     const nginxSampleNamespace = namespaces.split('\n');
 
-    await expect(nginxSampleNamespace).not.toContain('namespace/rd-nginx-demo');
+    expect(nginxSampleNamespace).not.toContain('namespace/rd-nginx-demo');
   });
 });
