@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 import {
   createDefaultSettings, kubectl, helm, tearDownHelm, playwrightReportAssets
 } from './utils/TestUtils';
-import { PlaywrightDevPage } from './pages/playwright-main-page';
+import { NavPage } from './pages/nav-page';
 
 let page: Page;
 
@@ -44,9 +44,9 @@ test.describe.serial('Helm Deployment Test', () => {
   });
 
   test('should start loading the background services', async() => {
-    const playwrightDev = new PlaywrightDevPage(page);
+    const navPage = new NavPage(page);
 
-    await playwrightDev.getProgressBar();
+    await navPage.getProgressBar();
   });
 
   test('should check kubernetes API is ready', async() => {

@@ -4,7 +4,7 @@ import {
 } from 'playwright';
 import { test, expect } from '@playwright/test';
 import { createDefaultSettings, kubectl, playwrightReportAssets } from './utils/TestUtils';
-import { PlaywrightDevPage } from './pages/playwright-main-page';
+import { NavPage } from './pages/nav-page';
 
 let page: Page;
 
@@ -35,9 +35,9 @@ test.describe.serial('K8s Deployment Test', () => {
   });
 
   test('should start loading the background services', async() => {
-    const playwrightDev = new PlaywrightDevPage(page);
+    const navPage = new NavPage(page);
 
-    await playwrightDev.getProgressBar();
+    await navPage.getProgressBar();
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {

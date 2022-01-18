@@ -5,10 +5,10 @@ import {
 } from 'playwright';
 import { test } from '@playwright/test';
 import { createDefaultSettings, playwrightReportAssets } from './utils/TestUtils';
-import { PlaywrightDevPage } from './pages/playwright-main-page';
-import { K8sPage } from './pages/playwright-k8s-page';
-import { WslPage } from './pages/playwright-wsl-page';
-import { PortForwardPage } from './pages/playwright-port-forward-page';
+import { NavPage } from './pages/nav-page';
+import { K8sPage } from './pages/k8s-page';
+import { WslPage } from './pages/wsl-page';
+import { PortForwardPage } from './pages/portforward-page';
 
 let page: Page;
 
@@ -43,29 +43,29 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('should land on General page', async() => {
-    const playwrightDev = new PlaywrightDevPage(page);
+    const navPage = new NavPage(page);
 
-    await playwrightDev.getGeneralPageTile('Welcome to Rancher Desktop');
+    await navPage.getGeneralPageTile('Welcome to Rancher Desktop');
   });
 
   test('should start loading the background services and hide progress bar', async() => {
-    const playwrightDev = new PlaywrightDevPage(page);
+    const navPage = new NavPage(page);
 
-    await playwrightDev.getProgressBar();
+    await navPage.getProgressBar();
   });
 
   test('should navigate to Kubernetes Settings and check elements', async() => {
-    const playwrightDev = new PlaywrightDevPage(page);
+    const navPage = new NavPage(page);
     const k8sPage = new K8sPage(page);
 
-    await playwrightDev.navigateTo('K8s');
+    await navPage.navigateTo('K8s');
 
     if (!os.platform().startsWith('win')) {
       await k8sPage.getK8sMemorySlider();
       await k8sPage.getK8sCpuSlider();
     }
 
-    await playwrightDev.getGeneralPageTile('Kubernetes Settings');
+    await navPage.getGeneralPageTile('Kubernetes Settings');
     await k8sPage.getK8sPort();
     await k8sPage.getK8sResetButton();
   });
@@ -75,21 +75,21 @@ test.describe.serial('Main App Test', () => {
    */
   if (os.platform().startsWith('win')) {
     test('should navigate to WSL Integration and check elements', async() => {
-      const playwrightDev = new PlaywrightDevPage(page);
+      const navPage = new NavPage(page);
       const wslPage = new WslPage(page);
 
-      await playwrightDev.navigateTo('Integrations');
+      await navPage.navigateTo('Integrations');
 
-      await playwrightDev.getGeneralPageTile('WSL Integration');
+      await navPage.getGeneralPageTile('WSL Integration');
       await wslPage.getWslDescription();
     });
 
     test('should navigate to Port Forwarding and check elements', async() => {
-      const playwrightDev = new PlaywrightDevPage(page);
+      const navPage = new NavPage(page);
       const portForwardPage = new PortForwardPage(page);
 
-      await playwrightDev.navigateTo('PortForwarding');
-      await playwrightDev.getGeneralPageTile('Port Forwarding');
+      await navPage.navigateTo('PortForwarding');
+      await navPage.getGeneralPageTile('Port Forwarding');
       await portForwardPage.getPortForwardDescription();
     });
   }
@@ -99,24 +99,24 @@ test.describe.serial('Main App Test', () => {
    */
   if (!os.platform().startsWith('win')) {
     test('should navigate to Supporting Utilities and check elements', async() => {
-      const playwrightDev = new PlaywrightDevPage(page);
+      const navPage = new NavPage(page);
 
-      await playwrightDev.navigateTo('Integrations');
-      await playwrightDev.getGeneralPageTile('Supporting Utilities');
+      await navPage.navigateTo('Integrations');
+      await navPage.getGeneralPageTile('Supporting Utilities');
     });
   }
 
   test('should navigate to Images page', async() => {
-    const playwrightDev = new PlaywrightDevPage(page);
+    const navPage = new NavPage(page);
 
-    await playwrightDev.navigateTo('Images');
-    await playwrightDev.getGeneralPageTile('Images');
+    await navPage.navigateTo('Images');
+    await navPage.getGeneralPageTile('Images');
   });
 
   test('should navigate to Troubleshooting and check elements', async() => {
-    const playwrightDev = new PlaywrightDevPage(page);
+    const navPage = new NavPage(page);
 
-    await playwrightDev.navigateTo('Troubleshooting');
-    await playwrightDev.getGeneralPageTile('Troubleshooting');
+    await navPage.navigateTo('Troubleshooting');
+    await navPage.getGeneralPageTile('Troubleshooting');
   });
 });

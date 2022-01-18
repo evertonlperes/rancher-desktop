@@ -1,7 +1,7 @@
 import { Page, Locator } from 'playwright';
 import { expect } from '@playwright/test';
 
-export class PlaywrightDevPage {
+export class NavPage {
     readonly page: Page;
     readonly mainTitleSelector: Locator;
     readonly progressBarSelector: Locator;
