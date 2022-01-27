@@ -6,7 +6,6 @@ import * as window from '@/window';
 import pathConflict from '@/utils/pathConflict';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import { isUnixError } from '@/typings/unix.interface';
 
 const console = Logging.background;
 const DebounceInterval = 500; // msec
@@ -63,13 +62,13 @@ export default class PathConflictManager {
     }
     const currentPathDirectories = currentPathAsString.split(path.delimiter)
       .filter(dir => path.resolve(dir) !== paths.integration);
-    const namesOfInterest = ['docker', 'helm', 'kim', 'kubectl', 'nerdctl'];
+    const namesOfInterest = ['docker', 'helm', 'kubectl', 'nerdctl'];
 
     for (const dirName of currentPathDirectories) {
       try {
         await fs.promises.access(dirName, fs.constants.R_OK);
       } catch (err) {
-        if (isUnixError(err) && err.code !== 'ENOENT') {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
           console.log(`error in setupPathWatchersForShadowing:`, err);
         }
         continue;

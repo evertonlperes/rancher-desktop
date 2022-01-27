@@ -4,20 +4,21 @@ import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
 } from 'playwright';
 import { test, expect } from '@playwright/test';
-import { createDefaultSettings } from './utils/TestUtils';
+import { createDefaultSettings, playwrightReportAssets } from './utils/TestUtils';
+import { NavPage } from './pages/nav-page';
+import { K8sPage } from './pages/k8s-page';
+import { WslPage } from './pages/wsl-page';
+import { PortForwardPage } from './pages/portforward-page';
 
 let page: Page;
-const defaultReportFolder = path.join(__dirname, 'reports/');
 
 /**
  * Using test.describe.serial make the test execute step by step, as described on each `test()` order
  * Playwright executes test in parallel by default and it will not work for our app backend loading process.
  * */
 test.describe.serial('Main App Test', () => {
-  let mainTitle: Locator;
   let electronApp: ElectronApplication;
   let context: BrowserContext;
-  const mainTitleSelector = '[data-test="mainTitle"]';
 
   test.beforeAll(async() => {
     createDefaultSettings();
@@ -37,45 +38,37 @@ test.describe.serial('Main App Test', () => {
   });
 
   test.afterAll(async() => {
-    await context.tracing.stop({ path: path.join(defaultReportFolder, 'pw-trace.zip') });
+    await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
     await electronApp.close();
   });
 
   test('should land on General page', async() => {
-    mainTitle = page.locator(mainTitleSelector);
+    const navPage = new NavPage(page);
 
-    await expect(mainTitle).toHaveText('Welcome to Rancher Desktop');
+    await expect(navPage.mainTitleSelector).toHaveText('Welcome to Rancher Desktop');
   });
 
   test('should start loading the background services and hide progress bar', async() => {
-    const progressBarSelector = page.locator('.progress');
+    const navPage = new NavPage(page);
 
-    await progressBarSelector.waitFor({ state: 'detached', timeout: 120_000 });
-    await expect(progressBarSelector).toBeHidden();
+    await navPage.progressBecomesReady();
+    await expect(navPage.progressBarSelector).toBeHidden();
   });
 
   test('should navigate to Kubernetes Settings and check elements', async() => {
-    const k8sMemorySliderSelector = '[id="memoryInGBWrapper"]';
-    const k8sCpuSliderSelector = '[id="numCPUWrapper"]';
-    const k8sPortSelector = '[data-test="portConfig"]';
-    const k8sResetBtn = '[data-test="k8sResetBtn"]';
+    const navPage = new NavPage(page);
+    const k8sPage = new K8sPage(page);
 
-    await navigateTo('K8s');
-    // Collecting data from selectors
-    const k8sSettingsTitle = page.locator(mainTitleSelector);
-    const k8sMemorySlider = page.locator(k8sMemorySliderSelector);
-    const k8sCpuSlider = page.locator(k8sCpuSliderSelector);
-    const k8sPort = page.locator(k8sPortSelector);
-    const k8sResetButton = page.locator(k8sResetBtn);
+    await navPage.navigateTo('K8s');
 
     if (!os.platform().startsWith('win')) {
-      await expect(k8sMemorySlider).toBeVisible();
-      await expect(k8sCpuSlider).toBeVisible();
+      await expect(k8sPage.k8sMemorySliderSelector).toBeVisible();
+      await expect(k8sPage.k8sCpuSliderSelector).toBeVisible();
     }
 
-    await expect(k8sSettingsTitle).toHaveText('Kubernetes Settings');
-    await expect(k8sPort).toBeVisible();
-    await expect(k8sResetButton).toBeVisible();
+    await expect(navPage.mainTitleSelector).toHaveText('Kubernetes Settings');
+    await expect(k8sPage.k8sPortSelector).toBeVisible();
+    await expect(k8sPage.k8sResetBtn).toBeVisible();
   });
 
   /**
@@ -83,25 +76,22 @@ test.describe.serial('Main App Test', () => {
    */
   if (os.platform().startsWith('win')) {
     test('should navigate to WSL Integration and check elements', async() => {
-      const wslDescriptionSelector = '.description';
+      const navPage = new NavPage(page);
+      const wslPage = new WslPage(page);
 
-      await navigateTo('Integrations');
-      const getWslIntegrationTitle = page.locator(mainTitleSelector);
-      const getWslDescriptionText = page.locator(wslDescriptionSelector);
+      await navPage.navigateTo('Integrations');
 
-      await expect(getWslIntegrationTitle).toHaveText('WSL Integration');
-      await expect(getWslDescriptionText).toBeVisible();
+      await expect(navPage.mainTitleSelector).toHaveText('WSL Integration');
+      await expect(wslPage.wslDescriptionSelector).toBeVisible();
     });
 
     test('should navigate to Port Forwarding and check elements', async() => {
-      const portForwardingContentSelector = '.content';
+      const navPage = new NavPage(page);
+      const portForwardPage = new PortForwardPage(page);
 
-      await navigateTo('PortForwarding');
-      const getPortForwardingTitle = page.locator(mainTitleSelector);
-      const getPortForwardingContent = page.locator(portForwardingContentSelector);
-
-      await expect(getPortForwardingTitle).toHaveText('Port Forwarding');
-      await expect(getPortForwardingContent).toBeVisible();
+      await navPage.navigateTo('PortForwarding');
+      await expect(navPage.mainTitleSelector).toHaveText('Port Forwarding');
+      await expect(portForwardPage.portForwardingContentSelector).toBeVisible();
     });
   }
 
@@ -110,40 +100,24 @@ test.describe.serial('Main App Test', () => {
    */
   if (!os.platform().startsWith('win')) {
     test('should navigate to Supporting Utilities and check elements', async() => {
-      await navigateTo('Integrations');
-      const getSupportTitle = page.locator(mainTitleSelector);
+      const navPage = new NavPage(page);
 
-      await expect(getSupportTitle).toHaveText('Supporting Utilities');
+      await navPage.navigateTo('Integrations');
+      await expect(navPage.mainTitleSelector).toHaveText('Supporting Utilities');
     });
   }
 
   test('should navigate to Images page', async() => {
-    const getSupportTitle = page.locator(mainTitleSelector);
+    const navPage = new NavPage(page);
 
-    await navigateTo('Images');
-    await expect(getSupportTitle).toHaveText('Images');
+    await navPage.navigateTo('Images');
+    await expect(navPage.mainTitleSelector).toHaveText('Images');
   });
 
   test('should navigate to Troubleshooting and check elements', async() => {
-    const getSupportTitle = page.locator(mainTitleSelector);
+    const navPage = new NavPage(page);
 
-    await navigateTo('Troubleshooting');
-    await expect(getSupportTitle).toHaveText('Troubleshooting');
+    await navPage.navigateTo('Troubleshooting');
+    await expect(navPage.mainTitleSelector).toHaveText('Troubleshooting');
   });
 });
-
-/**
- * Navigate to a specific tab
- * @param path
- */
-async function navigateTo(path: string) {
-  try {
-    return await Promise.all([
-      page.click(`.nav li[item="/${ path }"] a`),
-      page.waitForNavigation({ url: `**/${ path }`, timeout: 60_000 }),
-      page.screenshot({ path: `${ defaultReportFolder }${ path }-screenshot.png` })
-    ]);
-  } catch (err) {
-    console.log(`Cannot navigate to ${ path }. Error ---> `, err);
-  }
-}

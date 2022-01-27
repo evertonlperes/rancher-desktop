@@ -21,15 +21,29 @@ function createSettingsFile(settingsDir: string) {
   const fileSettingsName = 'settings.json';
   const settingsFullPath = path.join(settingsDir, fileSettingsName);
 
-  try {
-    if (!fs.existsSync(settingsFullPath)) {
-      fs.mkdirSync(settingsDir, { recursive: true });
-      fs.writeFileSync(path.join(settingsDir, fileSettingsName), settingsJson);
-      console.log('Default settings file successfully created on: ', `${ settingsDir }/${ fileSettingsName }`);
-    }
-  } catch (err) {
-    console.error('Error during default settings creation. Error: --> ', err);
+  if (!fs.existsSync(settingsFullPath)) {
+    fs.mkdirSync(settingsDir, { recursive: true });
+    fs.writeFileSync(path.join(settingsDir, fileSettingsName), settingsJson);
+    console.log('Default settings file successfully created on: ', `${ settingsDir }/${ fileSettingsName }`);
   }
+}
+
+/**
+ * Create playwright trace package based on the spec file name.
+ * @returns path string along with spec file
+ * @example main.e2e.spec.ts-pw-trace.zip
+ */
+export function playwrightReportAssets(fileName: string) {
+  return path.join(__dirname, '..', 'reports', `${ fileName }-pw-trace.zip`);
+}
+
+/**
+ * helm teardown
+ * it ensure that all helm test installation contents will be deleted.
+ */
+export async function tearDownHelm() {
+  await helm('repo', 'remove', 'bitnami');
+  await kubectl('delete', 'deploy', 'nginx-sample', '--namespace', 'default');
 }
 
 /**
