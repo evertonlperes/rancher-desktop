@@ -57,7 +57,8 @@ test.describe.serial('Main App Test', () => {
 
   test('should navigate to Kubernetes Settings and check elements', async() => {
     const navPage = new NavPage(page);
-    const k8sPage = new K8sPage(page);
+    // const k8sPage = new K8sPage(page);
+    const k8sPage = await navPage.navigateTo('K8s');
 
     await navPage.navigateTo('K8s');
 
@@ -111,17 +112,17 @@ test.describe.serial('Main App Test', () => {
     });
   }
 
-  test('should navigate to Images page', async() => {
-    const navPage = new NavPage(page);
+  // test('should navigate to Images page', async() => {
+  //   const navPage = new NavPage(page);
 
-    await navPage.navigateTo('Images');
-    await expect(navPage.mainTitle).toHaveText('Images');
-  });
+  //   await navPage.navigateTo('Images');
+  //   await expect(navPage.mainTitle).toHaveText('Images');
+  // });
 
-  test('should navigate to Troubleshooting and check elements', async() => {
-    const navPage = new NavPage(page);
+  // test('should navigate to Troubleshooting and check elements', async() => {
+  //   const navPage = new NavPage(page);
 
-    await navPage.navigateTo('Troubleshooting');
-    await expect(navPage.mainTitle).toHaveText('Troubleshooting');
-  });
+  //   await navPage.navigateTo('Troubleshooting');
+  //   await expect(navPage.mainTitle).toHaveText('Troubleshooting');
+  // });
 });

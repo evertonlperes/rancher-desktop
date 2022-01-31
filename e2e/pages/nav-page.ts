@@ -1,5 +1,13 @@
 import { Page, Locator } from 'playwright';
-import { expect } from '@playwright/test';
+import { K8sPage } from './k8s-page';
+import { PortForwardPage } from './portforward-page';
+import { WslPage } from './wsl-page';
+
+const pageConstructors = {
+  'K8s':            K8sPage,
+  'Integrations':   WslPage,
+  'PortForwarding': PortForwardPage,
+};
 
 export class NavPage {
     readonly page: Page;
@@ -25,10 +33,10 @@ export class NavPage {
       await this.progressBar.waitFor({ state: 'detached', timeout: 120_000 });
     }
 
-    async navigateTo(tab: string) {
-      return await Promise.all([
-        this.page.click(`.nav li[item="/${ tab }"] a`),
-        this.page.waitForNavigation({ url: `**/${ tab }`, timeout: 60_000 }),
-      ]);
+    async navigateTo(tab: keyof typeof pageConstructors) {
+      await this.page.click(`.nav li[item="/${ tab }"] a`);
+      await this.page.waitForNavigation({ url: `**/${ tab }`, timeout: 60_000 });
+
+      return new (pageConstructors[tab])(this.page);
     }
 }
