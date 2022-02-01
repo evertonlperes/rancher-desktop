@@ -60,7 +60,7 @@ test.describe.serial('Main App Test', () => {
     // const k8sPage = new K8sPage(page);
     const k8sPage = await navPage.navigateTo('K8s');
 
-    await navPage.navigateTo('K8s');
+    // await navPage.navigateTo('K8s');
 
     if (!os.platform().startsWith('win')) {
       await expect(k8sPage.memorySlider).toBeVisible();

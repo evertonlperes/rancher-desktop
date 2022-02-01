@@ -3,10 +3,10 @@ import { expect } from '@playwright/test';
 
 export class PortForwardPage {
     readonly page: Page;
-    readonly portForwardingContent: Locator;
+    readonly content: Locator;
 
     constructor(page: Page) {
       this.page = page;
-      this.portForwardingContent = page.locator('.content');
+      this.content = page.locator('.content');
     }
 }
