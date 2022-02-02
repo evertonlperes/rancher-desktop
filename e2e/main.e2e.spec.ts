@@ -87,7 +87,7 @@ test.describe.serial('Main App Test', () => {
       await navPage.navigateTo('Integrations');
 
       await expect(navPage.mainTitle).toHaveText('WSL Integration');
-      await expect(wslPage.wslDescription).toBeVisible();
+      await expect(wslPage.description).toBeVisible();
     });
 
     test('should navigate to Port Forwarding and check elements', async() => {
@@ -96,7 +96,7 @@ test.describe.serial('Main App Test', () => {
 
       await navPage.navigateTo('PortForwarding');
       await expect(navPage.mainTitle).toHaveText('Port Forwarding');
-      await expect(portForwardPage.portForwardingContent).toBeVisible();
+      await expect(portForwardPage.content).toBeVisible();
     });
   }
 
@@ -112,17 +112,17 @@ test.describe.serial('Main App Test', () => {
     });
   }
 
-  // test('should navigate to Images page', async() => {
-  //   const navPage = new NavPage(page);
+  test('should navigate to Images page', async() => {
+    const navPage = new NavPage(page);
 
-  //   await navPage.navigateTo('Images');
-  //   await expect(navPage.mainTitle).toHaveText('Images');
-  // });
+    await navPage.navigateTo('Images');
+    await expect(navPage.mainTitle).toHaveText('Images');
+  });
 
-  // test('should navigate to Troubleshooting and check elements', async() => {
-  //   const navPage = new NavPage(page);
+  test('should navigate to Troubleshooting and check elements', async() => {
+    const navPage = new NavPage(page);
 
-  //   await navPage.navigateTo('Troubleshooting');
-  //   await expect(navPage.mainTitle).toHaveText('Troubleshooting');
-  // });
+    await navPage.navigateTo('Troubleshooting');
+    await expect(navPage.mainTitle).toHaveText('Troubleshooting');
+  });
 });

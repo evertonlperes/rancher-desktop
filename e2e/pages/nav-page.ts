@@ -2,11 +2,15 @@ import { Page, Locator } from 'playwright';
 import { K8sPage } from './k8s-page';
 import { PortForwardPage } from './portforward-page';
 import { WslPage } from './wsl-page';
+import { ImagesPage } from './images-page';
+import { TroubleshootingPage } from './troubleshooting-page';
 
 const pageConstructors = {
-  'K8s':            K8sPage,
-  'Integrations':   WslPage,
-  'PortForwarding': PortForwardPage,
+  K8s:             (page: Page) => new K8sPage(page),
+  Integrations:    (page: Page) => new WslPage(page),
+  PortForwarding:  (page: Page) => new PortForwardPage(page),
+  Images:          (page: Page) => new ImagesPage(page),
+  Troubleshooting: (page: Page) => new TroubleshootingPage(page),
 };
 
 export class NavPage {
@@ -33,10 +37,17 @@ export class NavPage {
       await this.progressBar.waitFor({ state: 'detached', timeout: 120_000 });
     }
 
+    /**
+     * Navigate to a given tab, returning the page object model appropriate for
+     * the destination tab.
+     */
+    async navigateTo<pageName extends keyof typeof pageConstructors>(tab: pageName):
+      Promise<ReturnType<typeof pageConstructors[pageName]>>;
+
     async navigateTo(tab: keyof typeof pageConstructors) {
       await this.page.click(`.nav li[item="/${ tab }"] a`);
       await this.page.waitForNavigation({ url: `**/${ tab }`, timeout: 60_000 });
 
-      return new (pageConstructors[tab])(this.page);
+      return pageConstructors[tab](this.page);
     }
 }
