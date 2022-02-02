@@ -54,6 +54,10 @@ interface IpcMainEvents {
   'firstrun/ready': () => void;
   // #endregion
 
+  // #region kubernetes-errors
+  'kubernetes-errors/ready': () => void;
+  // #endregion
+
   'troubleshooting/show-logs': () => void;
 }
 
@@ -63,7 +67,6 @@ interface IpcMainEvents {
  */
 interface IpcMainInvokeEvents {
   'settings-write': (arg: RecursivePartial<import('@/config/settings').Settings>) => void;
-  'k8s-supports-port-forwarding': () => boolean;
   'service-fetch': (namespace?: string) => import('@/k8s-engine/k8s').ServiceEntry[];
   'service-forward': (service: {namespace: string, name: string, port: string | number}, state: boolean) => void;
   'get-app-version': () => string;
@@ -94,6 +97,7 @@ export interface IpcRendererEvents {
   'k8s-integrations': (integrations: Record<string, boolean | string>) => void;
   'k8s-integration-warnings': (name: string, warnings: Array<string>) => void;
   'service-changed': (services: import('@/k8s-engine/k8s').ServiceEntry[]) => void;
+  'kubernetes-errors-details': (titlePart: string, mainMessage: string, failureDetails: import('@/k8s-engine/k8s').FailureDetails) => void;
 
   // #region Images
   'images-process-cancelled': () => void;

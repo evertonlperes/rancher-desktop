@@ -25,6 +25,7 @@ import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
+import { findHomeDir } from '@/config/findHomeDir';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/resources';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
@@ -58,7 +59,7 @@ const DISTRO_BLACKLIST = [
 ];
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.12';
+const DISTRO_VERSION = '0.12.1';
 
 /**
  * The list of directories that are in the data distribution (persisted across
@@ -269,6 +270,32 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   /** The current container engine; changing this requires a full restart. */
   #currentContainerEngine = ContainerEngine.NONE;
+
+  /** Used for giving better error messages on failure to start or stop
+   * The actual underlying lima command
+   */
+  #lastCommand = '';
+
+  get lastCommand() {
+    return this.#lastCommand;
+  }
+
+  set lastCommand(value: string) {
+    console.log(`Running command ${ value }...`);
+    this.#lastCommand = value;
+  }
+
+  /** An explanation of the last run command */
+  #lastCommandComment = '';
+
+  get lastCommandComment() {
+    return this.#lastCommandComment;
+  }
+
+  set lastCommandComment(value: string) {
+    this.#lastCommandComment = value;
+    this.#lastCommand = '';
+  }
 
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper('x86_64');
@@ -724,6 +751,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } else {
       options = optionsOrArg;
     }
+    this.lastCommand = `wsl ${ args.join(' ') }`;
     try {
       const stream = options.logStream ?? await Logging['wsl-exec'].fdStream;
 
@@ -734,7 +762,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           ...options,
           encoding:    options.encoding ?? 'utf16le',
           stdio:       ['ignore', 'pipe', stream],
-          windowsHide: true,
         });
 
         return stdout;
@@ -744,7 +771,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         ...options,
         encoding:    options.encoding ?? 'utf16le',
         stdio:       ['ignore', stream, stream],
-        windowsHide: true,
       });
     } catch (ex) {
       if (!options.expectFailure) {
@@ -964,7 +990,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.currentAction = Action.STARTING;
     this.#currentContainerEngine = config?.containerEngine ?? ContainerEngine.NONE;
 
-    await this.progressTracker.action('Starting Kubernetes', 10, async() => {
+    this.lastCommandComment = 'Starting Kubernetes';
+    await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         this.setState(K8s.State.STARTING);
 
@@ -1010,14 +1037,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.progressInterval = undefined;
 
         // If we were previously running, stop it now.
-        await this.progressTracker.action('Stopping existing instance', 100, async() => {
+        this.lastCommandComment = 'Stopping existing instance';
+        await this.progressTracker.action(this.lastCommandComment, 100, async() => {
           this.process?.kill('SIGTERM');
           await this.killStaleProcesses();
         });
 
-        await this.progressTracker.action('Mounting WSL data', 100, this.mountData());
+        this.lastCommandComment = 'Mounting WSL data';
+        await this.progressTracker.action(this.lastCommandComment, 100, this.mountData());
+        this.lastCommandComment = 'Starting WSL environment';
         await Promise.all([
-          this.progressTracker.action('Starting WSL environment', 100, async() => {
+          this.progressTracker.action(this.lastCommandComment, 100, async() => {
             const logPath = await this.wslify(paths.logs);
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '').replace('/var/log', logPath);
 
@@ -1054,19 +1084,21 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           return;
         }
 
+        this.lastCommandComment = 'Waiting for Kubernetes API';
         await this.progressTracker.action(
-          'Waiting for Kubernetes API',
+          this.lastCommandComment,
           100,
           this.k3sHelper.waitForServerReady(() => this.ipAddress, this.#desiredPort));
+        this.lastCommandComment = 'Updating kubeconfig';
         await this.progressTracker.action(
-          'Updating kubeconfig',
+          this.lastCommandComment,
           100,
           this.k3sHelper.updateKubeconfig(
             async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig')));
 
         if (this.#currentContainerEngine === ContainerEngine.MOBY) {
           await this.progressTracker.action(
-            'Starting integrations',
+            this.lastCommandComment,
             100,
             async() => {
               const integrations = await this.listIntegrations();
@@ -1079,12 +1111,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
                 } else {
                   await this.mobySocketProxyProcesses[distro]?.stop();
                 }
+                await this.manageDockerCompose(distro, status === true);
               }
             });
         }
 
+        this.lastCommandComment = 'Waiting for services';
         await this.progressTracker.action(
-          'Waiting for services',
+          this.lastCommandComment,
           50,
           async() => {
             this.client = new K8s.Client();
@@ -1101,8 +1135,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
           { stdio: Logging.k8s });
 
+        this.lastCommandComment = 'Waiting for nodes';
         await this.progressTracker.action(
-          'Waiting for nodes',
+          this.lastCommandComment,
           100,
           async() => {
             if (!await this.client?.waitForReadyNodes()) {
@@ -1179,7 +1214,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.currentAction = Action.STOPPING;
     try {
       this.setState(K8s.State.STOPPING);
-      await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
+
+      this.lastCommandComment = 'Stopping Kubernetes';
+      await this.progressTracker.action(this.lastCommandComment, 10, async() => {
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
@@ -1201,7 +1238,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async del(): Promise<void> {
-    await this.progressTracker.action('Deleting Kubernetes', 20, async() => {
+    this.lastCommandComment = 'Deleting Kubernetes';
+    await this.progressTracker.action(this.lastCommandComment, 20, async() => {
       await this.stop();
       if (await this.isDistroRegistered()) {
         await this.execWSL('--unregister', INSTANCE_NAME);
@@ -1214,7 +1252,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async reset(config: Settings['kubernetes']): Promise<void> {
-    await this.progressTracker.action('Resetting Kubernetes state...', 5, async() => {
+    this.lastCommandComment = 'Resetting Kubernetes state...';
+    await this.progressTracker.action(this.lastCommandComment, 5, async() => {
       await this.stop();
       // Mount the data first so they can be deleted correctly.
       await this.mountData();
@@ -1334,7 +1373,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         return childProcess.spawn('wsl.exe',
           ['--distribution', distro, '--user', 'root', '--exec', executable,
             'docker-proxy', 'serve', ...this.debugArg('--verbose')],
-          { stdio: ['ignore', logStream, logStream] }
+          { stdio: ['ignore', logStream, logStream], windowsHide: true }
         );
       },
       async(child: childProcess.ChildProcess) => {
@@ -1349,7 +1388,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   async setIntegration(distro: string, state: boolean): Promise<string | undefined> {
     if (!(await this.registeredDistros()).includes(distro)) {
-      console.error(`Cannot integrate with unregistred distro ${ distro }`);
+      console.error(`Cannot integrate with unregistered distro ${ distro }`);
 
       return 'Unknown distribution';
     }
@@ -1375,11 +1414,89 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       } else {
         await this.mobySocketProxyProcesses[distro]?.stop();
       }
+      await this.manageDockerCompose(distro, state);
     } catch (error) {
       console.error(`Could not set up kubeconfig integration for ${ distro }:`, error);
 
       return `Error setting up integration`;
     }
     console.log(`kubeconfig integration for ${ distro } set to ${ state }`);
+  }
+
+  protected async manageDockerCompose(distro: string, state: boolean) {
+    const srcPath = await this.wslify(resources.get('linux', 'bin', 'docker-compose'));
+    const destDir = '$HOME/.docker/cli-plugins';
+    const destPath = `${ destDir }/docker-compose`;
+
+    // Update only the distro -- the current
+    if (state) {
+      await this.execWSL('--distribution', distro, '/bin/sh', '-c', `mkdir -p "${ destDir }"`);
+      await this.execWSL('--distribution', distro, '/bin/sh', '-c', `if [ ! -f "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
+      await this.updateDockerComposeLocally();
+    } else {
+      try {
+        // This is preferred to doing the readlink and rm in one long /bin/sh statement because
+        // then we rely on the distro's readlink supporting the -n option. Gnu/linux readlink supports -f,
+        // On macOS the -f means something else (not that we're likely to see macos WSLs).
+        const targetPath = (await this.execWSL({ capture: true, encoding: 'utf-8' },
+          '--distribution', distro, 'readlink', '-f', destPath)).trimEnd();
+
+        if (targetPath === srcPath) {
+          await this.execWSL('--distribution', distro, 'rm', destPath);
+        }
+      } catch (err) {
+        console.log(`Failed to readlink/rm ${ destPath }`, err);
+      }
+    }
+  }
+
+  // The code never deletes %HOME%/.docker/cli-plugins/docker-compose.exe, so check to create only once.
+  #checkedDockerCompose = false;
+
+  protected async updateDockerComposeLocally() {
+    // Do the same as manageDockerCompose, but locally
+    if (this.#checkedDockerCompose) {
+      return;
+    }
+    const homeDir = findHomeDir();
+
+    if (!homeDir) {
+      throw new Error("Can't find home directory");
+    }
+    const cliDir = path.join(homeDir, '.docker', 'cli-plugins');
+    const cliPath = path.join(cliDir, 'docker-compose.exe');
+    const srcPath = resources.executable('docker-compose');
+
+    try {
+      await fs.promises.access(cliPath);
+      // Nothing to do if the file exists
+    } catch (err: any) {
+      if (err.code === 'ENOENT') {
+        await fs.promises.mkdir(cliDir, { recursive: true });
+      } else {
+        console.error(`Can't create the cli-plugins directory:`, err);
+
+        return;
+      }
+      try {
+        await fs.promises.copyFile(srcPath, cliPath, fs.constants.COPYFILE_EXCL);
+      } catch (err2) {
+        console.error(`Failed to copy file ${ srcPath } to ${ cliPath }`, err2);
+
+        return;
+      }
+    }
+    this.#checkedDockerCompose = true;
+  }
+
+  async getFailureDetails(): Promise<K8s.FailureDetails> {
+    const loglines = (await fs.promises.readFile(console.path, 'utf-8')).split('\n').slice(-10);
+    const details: K8s.FailureDetails = {
+      lastCommand:        this.lastCommand,
+      lastCommandComment: this.lastCommandComment,
+      lastLogLines:       loglines,
+    };
+
+    return details;
   }
 }
