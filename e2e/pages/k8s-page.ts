@@ -1,18 +1,18 @@
 import { Page, Locator } from 'playwright';
-import { expect } from '@playwright/test';
-
 export class K8sPage {
     readonly page: Page;
-    readonly k8sMemorySliderSelector: Locator;
-    readonly k8sCpuSliderSelector: Locator;
-    readonly k8sPortSelector: Locator;
-    readonly k8sResetBtn: Locator;
+    readonly engineRuntime: Locator;
+    readonly memorySlider: Locator;
+    readonly resetButton: Locator;
+    readonly cpuSlider: Locator;
+    readonly port: Locator;
 
     constructor(page: Page) {
       this.page = page;
-      this.k8sMemorySliderSelector = page.locator('[id="memoryInGBWrapper"]');
-      this.k8sCpuSliderSelector = page.locator('[id="numCPUWrapper"]');
-      this.k8sPortSelector = page.locator('[data-test="portConfig"]');
-      this.k8sResetBtn = page.locator('[data-test="k8sResetBtn"]');
+      this.memorySlider = page.locator('[id="memoryInGBWrapper"]');
+      this.resetButton = page.locator('[data-test="k8sResetBtn"]');
+      this.cpuSlider = page.locator('[id="numCPUWrapper"]');
+      this.engineRuntime = page.locator('.engine-selector');
+      this.port = page.locator('[data-test="portConfig"]');
     }
 }
