@@ -32,6 +32,7 @@ task:
     - useradd --create-home --groups kvm ranchertest
     - tar c --owner=ranchertest . | tar x --directory=/home/ranchertest
     - chown -R ranchertest:ranchertest /home/ranchertest
+    - chown -R cirrus:cirrus .
 
   install_deps_script: |
     apt-get update
