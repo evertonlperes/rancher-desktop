@@ -1,7 +1,7 @@
 <template>
   <section>
     <h3 v-text="description" />
-    <section class="body">
+    <section class="body" data-test="symlinkBody">
       <Banner v-if="globalError" color="error" :label="globalError" />
       <ul>
         <li v-for="item of integrationsList" :key="item.name">

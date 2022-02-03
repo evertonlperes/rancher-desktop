@@ -101,7 +101,7 @@ test.describe.serial('Main App Test', () => {
       const integrationsPage = await navPage.navigateTo('Integrations');
 
       await expect(navPage.mainTitle).toHaveText('Supporting Utilities');
-      await expect(integrationsPage.description).toBeVisible();
+      await expect(integrationsPage.symlinks).toBeVisible();
     });
   }
 
