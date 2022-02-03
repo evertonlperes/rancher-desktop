@@ -78,7 +78,7 @@ test.describe.serial('Main App Test', () => {
       const wslPage = await navPage.navigateTo('Integrations');
 
       await expect(navPage.mainTitle).toHaveText('WSL Integration');
-      await expect(wslPage.description).toBeVisible();
+      await expect(wslPage.symlinks).toBeVisible();
     });
 
     test('should navigate to Port Forwarding and check elements', async() => {
