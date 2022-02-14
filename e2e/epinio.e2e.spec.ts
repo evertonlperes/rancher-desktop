@@ -108,6 +108,7 @@ test.describe.serial('Epinio Install Test', () => {
  */
 export async function loadBalancerIp() {
   const serviceInfo = await kubectl('describe', 'service', 'traefik', '--namespace', 'kube-system');
+  console.log(serviceInfo);
   const serviceFiltered = serviceInfo.split('\n').toString();
   const ipAddrRegex = /(LoadBalancer Ingress:)\s+(((?:[0-9]{1,3}\.){3}[0-9]{1,3}))/;
   const regex = new RegExp(`${ ipAddrRegex.source }`);
