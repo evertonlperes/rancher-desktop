@@ -59,6 +59,11 @@ test.describe.serial('Epinio Install Test', () => {
     await navPage.progressBecomesReady();
     await expect(navPage.progressBar).toBeHidden();
   });
+  test('should check kubernetes API is ready', async() => {
+    const output = await kubectl('cluster-info');
+
+    expect(output).toMatch(/is running at ./);
+  });
   test('should verify epinio cli was properly installed', async() => {
     const epinioCliStatus = await epinio('version');
 
