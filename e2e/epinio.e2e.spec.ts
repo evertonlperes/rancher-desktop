@@ -88,7 +88,7 @@ test.describe.serial('Epinio Install Test', () => {
     expect(epinioConfigUpdate).toContain('Ok');
   });
   test('should push a sample app through epinio cli', async() => {
-    const epinioPush = await epinio('push', '--name', 'sample', '--path', './e2e/assets/sample-app');
+    const epinioPush = await epinio('push', '--name', 'sample', '--path', path.join(__dirname, 'assets', 'sample-app'));
 
     expect(epinioPush).toContain('App is online.');
   });
@@ -108,7 +108,7 @@ test.describe.serial('Epinio Install Test', () => {
  */
 export async function loadBalancerIp() {
   const serviceInfo = await kubectl('describe', 'service', 'traefik', '--namespace', 'kube-system');
-  console.log(serviceInfo);
+
   const serviceFiltered = serviceInfo.split('\n').toString();
   const ipAddrRegex = /(LoadBalancer Ingress:)\s+(((?:[0-9]{1,3}\.){3}[0-9]{1,3}))/;
   const regex = new RegExp(`${ ipAddrRegex.source }`);
@@ -202,7 +202,7 @@ export async function tearDownEpinio() {
     fs.rmSync(epinioTempFolder, { recursive: true, maxRetries: 10 });
   }
 
-  await helm('uninstall', 'epinio-installer', '--wait', '--timeout=20m');
+  await helm('uninstall', 'epinio-installer', '--timeout=20m');
 }
 
 /**

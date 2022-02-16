@@ -96,8 +96,6 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
   try {
     const { stdout } = await childProcess.spawnFile(
       exe, args, { stdio: ['ignore', 'pipe', 'inherit'] });
-      //debug
-      console.log(stdout);
 
     return stdout;
   } catch (ex:any) {
