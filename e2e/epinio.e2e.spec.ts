@@ -75,12 +75,14 @@ test.describe.serial('Epinio Install Test', () => {
     expect(epinioRepoAdd).toContain('"epinio" has been added to your repositories');
   });
   test('should install epinio-installer application', async() => {
-    for (let i = 0; i < 20; i++) {
-      const pods = await kubectl('get', 'pods', '-A');
+    // for (let i = 0; i < 100; i++) {
+    //   const pods = await kubectl('get', 'pods', '-A');
 
-      console.log(`--> PODS: count ${ i }`, pods);
-    }
+    //   console.log(`--> PODS: count ${ i }`, pods);
+    // }
 
+    const waitTraefik = await kubectl('wait', '--for=condition=available', '--namespace', 'kube-system', 'deployment/traefik');
+    console.log (waitTraefik);
     const loadBalancerIpAddr = await loadBalancerIp();
     const epinioInstall = await helm('install', 'epinio-installer', 'epinio/epinio-installer',
       '--set', 'skipTraefik=true', '--set', `domain=${ loadBalancerIpAddr }.omg.howdoi.website`,
