@@ -115,7 +115,7 @@ export async function loadBalancerIp() {
     if (traefikDeployment) {
       break;
     }
-    await util.promisify(setTimeout)(5_000);
+    await util.promisify(setTimeout)(60_000);
   }
   const serviceInfo = await kubectl('describe', 'service', 'traefik', '--namespace', 'kube-system');
 
