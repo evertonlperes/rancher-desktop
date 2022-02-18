@@ -112,6 +112,7 @@ export async function loadBalancerIp() {
 
   for (let i = 0; i < 10; i++) {
     traefikDeployment = (await kubectl('get', 'deployment', 'traefik', '--namespace', 'kube-system', '--output=name')).trim();
+    console.log('Status: ', traefikDeployment);
     if (traefikDeployment) {
       break;
     }
