@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import util from 'util';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { test, expect } from '@playwright/test';
 import {
@@ -75,14 +76,6 @@ test.describe.serial('Epinio Install Test', () => {
     expect(epinioRepoAdd).toContain('"epinio" has been added to your repositories');
   });
   test('should install epinio-installer application', async() => {
-    // for (let i = 0; i < 100; i++) {
-    //   const pods = await kubectl('get', 'pods', '-A');
-
-    //   console.log(`--> PODS: count ${ i }`, pods);
-    // }
-
-    const waitTraefik = await kubectl('wait', '--for=condition=available', '--namespace', 'kube-system', 'deployment/traefik');
-    console.log (waitTraefik);
     const loadBalancerIpAddr = await loadBalancerIp();
     const epinioInstall = await helm('install', 'epinio-installer', 'epinio/epinio-installer',
       '--set', 'skipTraefik=true', '--set', `domain=${ loadBalancerIpAddr }.omg.howdoi.website`,
@@ -115,6 +108,15 @@ test.describe.serial('Epinio Install Test', () => {
  * It will return the traefik IP address, required by epinio install.
  */
 export async function loadBalancerIp() {
+  let traefikDeployment = '';
+
+  for (let i = 0; i < 10; i++) {
+    traefikDeployment = (await kubectl('get', 'deployment', 'traefik', '--namespace', 'kube-system', '--output=name')).trim();
+    if (traefikDeployment) {
+      break;
+    }
+    await util.promisify(setTimeout)(5_000);
+  }
   const serviceInfo = await kubectl('describe', 'service', 'traefik', '--namespace', 'kube-system');
 
   const serviceFiltered = serviceInfo.split('\n').toString();
