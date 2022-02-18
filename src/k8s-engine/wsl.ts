@@ -21,6 +21,7 @@ import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
+import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
@@ -59,7 +60,7 @@ const DISTRO_BLACKLIST = [
 ];
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.12.1';
+const DISTRO_VERSION = '0.15';
 
 /**
  * The list of directories that are in the data distribution (persisted across
@@ -441,12 +442,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           try {
             // Create a distro archive from the main distro.
             // WSL seems to require a working /bin/sh for initialization.
+            const OVERRIDE_FILES = { 'etc/wsl.conf': SCRIPT_DATA_WSL_CONF };
             const REQUIRED_FILES = [
               '/bin/busybox', // Base tools
               '/bin/mount', // Required for WSL startup
               '/bin/sh', // WSL requires a working shell to initialize
               '/lib', // Dependencies for busybox
-              '/etc/wsl.conf', // WSL configuration for minimal startup
               '/etc/passwd', // So WSL can spawn programs as a user
             ];
             const archivePath = path.join(workdir, 'distro.tar');
@@ -471,6 +472,20 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
             await this.execCommand('tar', '-cf', await this.wslify(archivePath),
               '-C', '/', ...extraFiles, ...DISTRO_DATA_DIRS);
+
+            // The tar-stream package doesn't handle appends well (needs to
+            // stream to a temporary file), and busybox tar doesn't support
+            // append either.  Luckily Windows ships with a bsdtar that
+            // supports it, though it only supports short options.
+            for (const [relPath, contents] of Object.entries(OVERRIDE_FILES)) {
+              const absPath = path.join(workdir, 'tar', relPath);
+
+              await fs.promises.mkdir(path.dirname(absPath), { recursive: true });
+              await fs.promises.writeFile(absPath, contents);
+            }
+            await childProcess.spawnFile('tar.exe',
+              ['-r', '-f', archivePath, '-C', path.join(workdir, 'tar'), ...Object.keys(OVERRIDE_FILES)]);
+            await this.execCommand('tar', '-tvf', await this.wslify(archivePath));
             await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
           } catch (ex) {
             console.log(`Error registering data distribution: ${ ex }`);
@@ -510,6 +525,55 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } finally {
       await fs.promises.rm(workdir, { recursive: true, force: true });
     }
+  }
+
+  /**
+   * Write out /etc/hosts in the main distribution, copying the bulk of the
+   * contents from the data distribution.
+   */
+  protected async writeHostsFile() {
+    await this.progressTracker.action('Updating /etc/hosts', 50, async() => {
+      const contents = await fs.promises.readFile(`\\\\wsl$\\${ DATA_INSTANCE_NAME }\\etc\\hosts`);
+      const hosts = ['host.rancher-desktop.internal', 'host.docker.internal'];
+      const extra = [
+        '# BEGIN Rancher Desktop configuration.',
+        `${ this.hostIPAddress } ${ hosts.join(' ') }`,
+        '# END Rancher Desktop configuration.',
+      ].map(l => `${ l }\n`).join('');
+
+      await fs.promises.writeFile(`\\\\wsl$\\${ INSTANCE_NAME }\\etc\\hosts`,
+        Buffer.concat([contents, Buffer.from(extra, 'utf-8')]));
+    });
+  }
+
+  /**
+   * Write configuration for dnsmasq / and /etc/resolv.conf; required before [runInit].
+   */
+  protected async writeResolvConf() {
+    await this.progressTracker.action('Updating DNS configuration', 50,
+      // Tell dnsmasq to use the resolv.conf from the data distro as the
+      // upstream configuration.
+      Promise.all([
+        (async() => {
+          try {
+            const contents = await this.readFile(
+              '/run/resolvconf/resolv.conf', { distro: DATA_INSTANCE_NAME });
+
+            await this.writeFile('/etc/dnsmasq.d/data-resolv-conf', contents);
+          } catch (ex) {
+            console.error('Failed to copy existing resolv.conf');
+            throw ex;
+          }
+        })(),
+        this.writeFile(
+          '/etc/dnsmasq.d/rancher-desktop.conf',
+          Object.entries({
+            'resolv-file':    '/etc/dnsmasq.d/data-resolv-conf',
+            'listen-address': await this.ipAddress,
+          }).map(([k, v]) => `${ k }=${ v }\n`).join('')),
+        this.writeFile('/etc/resolv.conf', `nameserver ${ await this.ipAddress }`),
+        this.writeConf('dnsmasq', { DNSMASQ_OPTS: '--user=dnsmasq --group=dnsmasq' }),
+      ]));
   }
 
   /**
@@ -653,6 +717,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         100,
         this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args)));
     }
+  }
+
+  /**
+   * Read the given file in a WSL distribution
+   * @param [filePath] the path of the file to read.
+   * @param [options] Optional configuratino for reading the file.
+   * @param [options.distro=INSTANCE_NAME] The distribution to read from.
+   * @param [options.encoding='utf-8'] The encoding to use for the result.
+   */
+  protected async readFile(filePath: string, options?: Partial<{ distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME, encoding : BufferEncoding}>) {
+    const distro = options?.distro ?? INSTANCE_NAME;
+    const encoding = options?.encoding ?? 'utf-8';
+    // Run wslpath here, to ensure that WSL generates any files we need.
+    const windowsPath = (await this.execWSL({ capture: true, encoding },
+      '--distribution', distro,
+      '/bin/wslpath', '-w', filePath)).trim();
+
+    return await fs.promises.readFile(windowsPath, options?.encoding ?? 'utf-8');
   }
 
   /**
@@ -851,6 +933,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     })();
   }
 
+  /** Get the IPv4 address of the WSL (VM) host interface, assuming it's already up. */
+  get hostIPAddress(): string | undefined {
+    const iface = os.networkInterfaces()['vEthernet (WSL)'];
+
+    return (iface ?? []).find(addr => addr.family === 'IPv4')?.address;
+  }
+
   async getBackendInvalidReason(): Promise<K8s.KubernetesError | null> {
     // Check if wsl.exe is available
     try {
@@ -1022,6 +1111,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.upgradeDistroAsNeeded();
             await this.ensureDistroRegistered();
             await this.initDataDistribution();
+            await this.writeHostsFile();
+            await this.writeResolvConf();
           })(),
           this.progressTracker.action(
             'Checking k3s images',
@@ -1058,9 +1149,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               LOG_DIR:           logPath,
             });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
-            await this.runInit();
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
+            await this.runInit();
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
@@ -1072,12 +1163,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           }),
         ]);
 
-        await this.startService('k3s', {
-          PORT:                   this.#desiredPort.toString(),
-          LOG_DIR:                await this.wslify(paths.logs),
-          'export IPTABLES_MODE': 'legacy',
-          ENGINE:                 this.#currentContainerEngine,
-        });
+        this.lastCommandComment = 'Running provisioning scripts';
+        await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
+
+        await this.progressTracker.action('Starting k3s', 100,
+          this.startService('k3s', {
+            PORT:                   this.#desiredPort.toString(),
+            LOG_DIR:                await this.wslify(paths.logs),
+            'export IPTABLES_MODE': 'legacy',
+            ENGINE:                 this.#currentContainerEngine,
+            ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
+          }));
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted
@@ -1093,8 +1189,21 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await this.progressTracker.action(
           this.lastCommandComment,
           100,
-          this.k3sHelper.updateKubeconfig(
-            async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig')));
+          async() => {
+            // Wait for the file to exist first, for slow machines.
+            const command = 'if test -r /etc/rancher/k3s/k3s.yaml; then echo yes; else echo no; fi';
+
+            while (true) {
+              const result = await this.captureCommand('/bin/sh', '-c', command);
+
+              if (result.includes('yes')) {
+                break;
+              }
+              await util.promisify(timers.setTimeout)(1_000);
+            }
+            await this.k3sHelper.updateKubeconfig(
+              async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig'));
+          });
 
         if (this.#currentContainerEngine === ContainerEngine.MOBY) {
           await this.progressTracker.action(
@@ -1116,20 +1225,29 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             });
         }
 
+        const client = this.client = new K8s.Client();
+
         this.lastCommandComment = 'Waiting for services';
         await this.progressTracker.action(
           this.lastCommandComment,
           50,
           async() => {
-            this.client = new K8s.Client();
-            await this.client.waitForServiceWatcher();
-            this.client.on('service-changed', (services) => {
+            await client.waitForServiceWatcher();
+            client.on('service-changed', (services) => {
               this.emit('service-changed', services);
             });
           });
         this.activeVersion = desiredVersion;
         this.currentPort = this.#desiredPort;
         this.emit('current-port-changed', this.currentPort);
+
+        // Remove traefik if necessary.
+        if (!this.cfg?.options.traefik) {
+          await this.progressTracker.action(
+            'Removing Traefik',
+            50,
+            this.k3sHelper.uninstallTraefik(this.client));
+        }
 
         // Trigger kuberlr to ensure there's a compatible version of kubectl in place
         await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
@@ -1148,7 +1266,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         // See comments for this code in lima.ts:start()
 
         if (config.checkForExistingKimBuilder) {
-          this.client ??= new K8s.Client();
           await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
           // No need to remove kim builder components ever again.
           config.checkForExistingKimBuilder = false;
@@ -1202,6 +1319,64 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.execCommand('/usr/sbin/update-ca-certificates');
   }
 
+  /**
+   * Run provisioning scripts; this is done after init is started.
+   */
+  protected async runProvisioningScripts() {
+    const provisioningPath = path.join(paths.config, 'provisioning');
+
+    await fs.promises.mkdir(provisioningPath, { recursive: true });
+    await Promise.all([
+      (async() => {
+        // Write out the readme file.
+        const ReadmePath = path.join(provisioningPath, 'README');
+
+        try {
+          await fs.promises.access(ReadmePath, fs.constants.F_OK);
+        } catch {
+          const contents = `${ `
+            Any files named '*.start' in this directory will be executed
+            sequentially on Rancher Desktop startup, before the main services.
+            Files are processed in lexical order, and startup will be delayed
+            until they have all run to completion. Similaryly, any files named
+            '*.stop' will be executed on shutdown, after the main services have
+            exited, and delay shutdown until they have run to completion.
+            `.replace(/\s*\n\s*/g, '\n').trim() }\n`;
+
+          await fs.promises.writeFile(ReadmePath, contents, { encoding: 'utf-8' });
+        }
+      })(),
+      (async() => {
+        const linuxPath = await this.wslify(provisioningPath);
+
+        await this.execCommand('/bin/sh', '-c', `
+          set -o errexit -o nounset
+
+          # Stop the service if it's already running for some reason.
+          # This should never be the case (because we tore down init).
+          /usr/local/bin/wsl-service --ifstarted local stop
+
+          # Clobber /etc/local.d and replace it with a symlink to our desired
+          # path.  This is needed as /etc/init.d/local does not support
+          # overriding the script directory.
+          rm -r -f /etc/local.d
+          ln -s -f -T "${ linuxPath }" /etc/local.d
+
+          # Ensure all scripts are executable; Windows mounts are unlikely to
+          # have it set by default.
+          for f in "${ linuxPath }"/*.start "${ linuxPath }"/*.stop; do
+              if [ -f "\${f}" ]; then
+                  chmod a+x "\${f}"
+              fi
+          done
+
+          # Run the script.
+          exec /usr/local/bin/wsl-service local start
+        `.replace(/\r/g, ''));
+      })(),
+    ]);
+  }
+
   async stop(): Promise<void> {
     // When we manually call stop, the subprocess will terminate, which will
     // cause stop to get called again.  Prevent the re-entrancy.
@@ -1221,6 +1396,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
+          try {
+            await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');
+          } catch (ex) {
+            // Do not allow errors here to prevent us from stopping.
+            console.error('Failed to run user provisioning scripts on stopping:', ex);
+          }
         }
         this.process?.kill('SIGTERM');
         await Promise.all(Object.values(this.mobySocketProxyProcesses).map(proc => proc.stop()));

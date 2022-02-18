@@ -160,6 +160,21 @@ export default async function main(platform) {
 
   await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
 
+  // Download the Docker-Buildx Plug-In
+  const dockerBuildxVersion = 'v0.7.1';
+  const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ dockerBuildxVersion }`;
+  const dockerBuildxExecutable = exeName(`buildx-${ dockerBuildxVersion }.${ kubePlatform }-${ cpu }`);
+  const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
+  const dockerBuildxPath = path.join(binDir, exeName('docker-buildx'));
+  const dockerBuildxOptions = {};
+
+  // No checksums available on the docker/buildx site for darwin builds
+  // https://github.com/docker/buildx/issues/945
+  if (kubePlatform !== 'darwin') {
+    dockerBuildxOptions.expectedChecksum = await findChecksum(`${ dockerBuildxURLBase }/checksums.txt`, dockerBuildxExecutable);
+  }
+  await download(dockerBuildxURL, dockerBuildxPath, dockerBuildxOptions);
+
   // Download the Docker-Compose Plug-In
   const dockerComposeVersion = 'v2.2.3';
   const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ dockerComposeVersion }`;
@@ -197,12 +212,32 @@ export default async function main(platform) {
   await fs.promises.mkdir(actualBinDir, { recursive: true });
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
   await downloadTarGZ(trivyURL, path.join(actualBinDir, 'trivy'), { expectedChecksum: trivySHA });
+
+  // Download Steve
+  const steveVersion = '0.1.0-beta3';
+  const steveURLBase = `https://github.com/rancher-sandbox/steve/releases/download/${ steveVersion }`;
+  const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
+  const steveExecutable = `steve-${ kubePlatform }-${ steveCPU }`;
+  const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
+  const stevePath = path.join(binDir, exeName('steve'));
+  const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
+
+  await downloadTarGZ(
+    steveURL,
+    stevePath,
+    {
+      expectedChecksum:  steveSHA,
+      checksumAlgorithm: 'sha512'
+    });
+
+  downloadRancherDashboard();
 }
 
 /**
  * Desired: on Windows, .../bin/kubectl.exe is a copy of .../bin/kuberlr.exe
  *          elsewhere: .../bin/kubectl is a symlink to .../bin/kuberlr
  * @param kuberlrPath {string}
+ * @param binKubectlPath {string}
  * @returns {Promise<void>}
  */
 async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
@@ -229,4 +264,52 @@ async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
     // .../bin/kubectl doesn't exist, so there's nothing to clean up
   }
   await fs.promises.symlink('kuberlr', binKubectlPath);
+}
+
+async function downloadRancherDashboard() {
+  // Download Rancher Dashboard
+  const rancherDashboardVersion = 'desktop-v2.6.3.beta.2';
+  const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ rancherDashboardVersion }`;
+  const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
+  const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
+  const resourcesRoot = path.join(process.cwd(), 'resources');
+  const rancherDashboardPath = path.join(resourcesRoot, 'rancher-dashboard.tgz');
+  const rancherDashboardSHA = await findChecksum(`${ rancherDashboardURL }.sha512sum`, rancherDashboardExecutable);
+  const rancherDashboardDir = path.join(resourcesRoot, 'rancher-dashboard');
+
+  if (fs.existsSync(rancherDashboardDir)) {
+    console.log(`${ rancherDashboardDir } already exists, not re-downloading.`);
+
+    return;
+  }
+
+  await download(
+    rancherDashboardURL,
+    rancherDashboardPath,
+    {
+      expectedChecksum:  rancherDashboardSHA,
+      checksumAlgorithm: 'sha512',
+      access:            fs.constants.W_OK
+    });
+
+  await fs.promises.mkdir(rancherDashboardDir, { recursive: true });
+
+  const args = ['tar', '-xf', rancherDashboardPath];
+
+  if (os.platform().startsWith('win')) {
+    // On Windows, force use the bundled bsdtar.
+    // We may find GNU tar on the path, which looks at the Windows-style path
+    // and considers C:\Temp to be a reference to a remote host named `C`.
+    args[0] = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
+  }
+
+  spawnSync(
+    args[0],
+    args.slice(1),
+    {
+      cwd:   rancherDashboardDir,
+      stdio: 'inherit'
+    });
+
+  fs.rmSync(rancherDashboardPath, { maxRetries: 10 });
 }

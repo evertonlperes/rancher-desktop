@@ -7,15 +7,13 @@ import stream from 'stream';
 import tls from 'tls';
 import util from 'util';
 
-import fetch from 'node-fetch';
 import semver from 'semver';
-import { KubeConfig } from '@kubernetes/client-node';
+import { CustomObjectsApi, KubeConfig, V1ObjectMeta } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import yaml from 'yaml';
 
-import * as childProcess from '@/utils/childProcess';
+import fetch from '@/utils/fetch';
 import Logging from '@/utils/logging';
-import resources from '@/resources';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
 import paths from '@/utils/paths';
@@ -625,6 +623,7 @@ export default class K3sHelper extends events.EventEmitter {
       merge(userConfig.contexts, workConfig.contexts);
       merge(userConfig.users, workConfig.users);
       merge(userConfig.clusters, workConfig.clusters);
+      userConfig.currentContext ??= contextName;
       const userYAML = this.ensureContentsAreYAML(userConfig.exportConfig());
       const writeStream = fs.createWriteStream(workPath, { mode: 0o600 });
 
@@ -674,4 +673,38 @@ export default class K3sHelper extends events.EventEmitter {
     console.log(`Attempting to remove K3s state: ${ directories.sort().join(' ') }`);
     await Promise.all(directories.map(d => execAsRoot('rm', '-rf', d)));
   }
+
+  /**
+   * Manually uninstall the K3s-installed copy of Traefik, if it exists.
+   * This exists to work around https://github.com/k3s-io/k3s/issues/5103
+   */
+  async uninstallTraefik(client: K8s.Client) {
+    try {
+      const customApi = client.k8sClient.makeApiClient(CustomObjectsApi);
+      const { body: response } = await customApi.listNamespacedCustomObject('helm.cattle.io', 'v1', 'kube-system', 'helmcharts');
+      const charts: V1HelmChart[] = (response as any)?.items ?? [];
+
+      await Promise.all(charts.filter((chart) => {
+        const annotations = chart.metadata?.annotations ?? {};
+
+        return chart.metadata?.name && (annotations['objectset.rio.cattle.io/owner-name'] === 'traefik');
+      }).map((chart) => {
+        const name = chart.metadata?.name;
+
+        if (name) {
+          console.debug(`Will delete helm chart ${ name }`);
+
+          return customApi.deleteNamespacedCustomObject('helm.cattle.io', 'v1', 'kube-system', 'helmcharts', name);
+        }
+      }));
+    } catch (ex) {
+      console.error('Error uninstalling Traefik', ex);
+    }
+  }
+}
+
+interface V1HelmChart {
+  apiVersion?: 'helm.cattle.io/v1';
+  kind?: 'HelmChart';
+  metadata?: V1ObjectMeta;
 }
