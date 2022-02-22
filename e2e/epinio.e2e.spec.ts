@@ -1,7 +1,8 @@
-import path from 'path';
 import fs from 'fs';
 import os from 'os';
-import util from 'util';
+import path from 'path';
+import { exec } from 'child_process';
+import { stderr, stdout } from 'process';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { test, expect } from '@playwright/test';
 import {
@@ -108,16 +109,28 @@ test.describe.serial('Epinio Install Test', () => {
  * It will return the traefik IP address, required by epinio install.
  */
 export async function loadBalancerIp() {
-  let traefikDeployment = '';
+  // let traefikDeployment = '';
 
-  for (let i = 0; i < 10; i++) {
-    traefikDeployment = (await kubectl('get', 'deployment', 'traefik', '--namespace', 'kube-system', '--output=name')).trim();
-    console.log('Status: ', traefikDeployment);
-    if (traefikDeployment) {
-      break;
+  // for (let i = 0; i < 10; i++) {
+  //   traefikDeployment = (await kubectl('get', 'deployment', 'traefik', '--namespace', 'kube-system', '--output=name')).trim();
+  //   console.log('Status: ', traefikDeployment);
+  //   if (traefikDeployment) {
+  //     break;
+  //   }
+  //   await util.promisify(setTimeout)(60_000);
+  // }
+
+  // Wait until traefik is being deployed by k3s
+  exec('while [[ $(kubectl get deployment traefik --namespace kube-system --output=name) != "deployment.apps/traefik" ]]; do sleep 2; done', (error, stdout, stderr) => {
+    if (error) {
+      console.log(`Error: ${ error.message }`); // deleteme after debug
     }
-    await util.promisify(setTimeout)(60_000);
-  }
+    if (stderr) {
+      console.log(`stderr: ${ stderr }`); // deleteme after debug
+    }
+    console.log(`stdout: ${ stdout }`); // deleteme after debug
+  });
+
   const serviceInfo = await kubectl('describe', 'service', 'traefik', '--namespace', 'kube-system');
 
   const serviceFiltered = serviceInfo.split('\n').toString();
