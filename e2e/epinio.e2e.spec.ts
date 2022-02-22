@@ -1,6 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import util from 'util';
 import { exec } from 'child_process';
 import { stderr, stdout } from 'process';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
@@ -121,15 +122,21 @@ export async function loadBalancerIp() {
   // }
 
   // Wait until traefik is being deployed by k3s
-  exec('while [[ $(kubectl get deployment traefik --namespace kube-system --output=name) != "deployment.apps/traefik" ]]; do sleep 2; done', (error, stdout, stderr) => {
-    if (error) {
-      console.log(`Error: ${ error.message }`); // deleteme after debug
-    }
-    if (stderr) {
-      console.log(`stderr: ${ stderr }`); // deleteme after debug
-    }
-    console.log(`stdout: ${ stdout }`); // deleteme after debug
-  });
+  const traefikStatus = (await kubectl('get', 'deployment', 'traefik', '--namespace', 'kube-system', '--output=name')).trim();
+
+  while (traefikStatus.toString() !== 'deployment.apps/traefik') {
+    console.log(`output: ${ traefikStatus.toString() }`);
+    await util.promisify(setTimeout)(3_000);
+  }
+  // exec('while [[ $(kubectl get deployment traefik --namespace kube-system --output=name) != "deployment.apps/traefik" ]]; do sleep 2; done', (error, stdout, stderr) => {
+  //   if (error) {
+  //     console.log(`Error: ${ error.message }`); // deleteme after debug
+  //   }
+  //   if (stderr) {
+  //     console.log(`stderr: ${ stderr }`); // deleteme after debug
+  //   }
+  //   console.log(`stdout: ${ stdout }`); // deleteme after debug
+  // });
 
   const serviceInfo = await kubectl('describe', 'service', 'traefik', '--namespace', 'kube-system');
 
