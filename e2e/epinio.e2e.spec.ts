@@ -1,9 +1,6 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import util from 'util';
-import { exec } from 'child_process';
-import { stderr, stdout } from 'process';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { test, expect } from '@playwright/test';
 import {
@@ -15,6 +12,8 @@ import * as childProcess from '@/utils/childProcess';
 let page: Page;
 
 test.describe.serial('Epinio Install Test', () => {
+  // Skipping it for linux and win.....
+  test.skip(os.platform().startsWith('darwin') || os.platform().startsWith('win'), 'Still working on it');
   let electronApp: ElectronApplication;
   let context: BrowserContext;
 
@@ -110,34 +109,6 @@ test.describe.serial('Epinio Install Test', () => {
  * It will return the traefik IP address, required by epinio install.
  */
 export async function loadBalancerIp() {
-  // let traefikDeployment = '';
-
-  // for (let i = 0; i < 10; i++) {
-  //   traefikDeployment = (await kubectl('get', 'deployment', 'traefik', '--namespace', 'kube-system', '--output=name')).trim();
-  //   console.log('Status: ', traefikDeployment);
-  //   if (traefikDeployment) {
-  //     break;
-  //   }
-  //   await util.promisify(setTimeout)(60_000);
-  // }
-
-  // Wait until traefik is being deployed by k3s
-  const traefikStatus = (await kubectl('get', 'deployment', 'traefik', '--namespace', 'kube-system', '--output=name')).trim();
-
-  while (traefikStatus.toString() !== 'deployment.apps/traefik') {
-    console.log(`output: ${ traefikStatus.toString() }`);
-    await util.promisify(setTimeout)(3_000);
-  }
-  // exec('while [[ $(kubectl get deployment traefik --namespace kube-system --output=name) != "deployment.apps/traefik" ]]; do sleep 2; done', (error, stdout, stderr) => {
-  //   if (error) {
-  //     console.log(`Error: ${ error.message }`); // deleteme after debug
-  //   }
-  //   if (stderr) {
-  //     console.log(`stderr: ${ stderr }`); // deleteme after debug
-  //   }
-  //   console.log(`stdout: ${ stdout }`); // deleteme after debug
-  // });
-
   const serviceInfo = await kubectl('describe', 'service', 'traefik', '--namespace', 'kube-system');
 
   const serviceFiltered = serviceInfo.split('\n').toString();
