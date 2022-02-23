@@ -97,7 +97,7 @@ test.describe.serial('Epinio Install Test', () => {
   test('should verify deployed sample application is reachable', async() => {
     const loadBalancerIpAddr = await loadBalancerIp();
     const urlAddr = `https://sample.${ loadBalancerIpAddr }.omg.howdoi.website`;
-    // In order to avoid error 60 (SSL Cert error), passing "--insecure"
+    // Trick to avoid error 60 (SSL Cert error), passing "--insecure" parameter
     const sampleApp = await curl('--fail', '--insecure', urlAddr);
 
     expect(sampleApp).toContain('PHP Version');
@@ -138,10 +138,10 @@ export async function installEpinioCli() {
  */
 export async function downloadEpinioBinary( platformType: string) {
   // Setting up epinio binaries names per platform
+  const epinioWin = 'epinio-windows-amd64.exe';
+  const epinioLinux = 'epinio-linux-x86_64';
   const epinioDarwin = 'epinio-darwin-x86_64';
   const epinioDarwinArm = 'epinio-darwin-arm64';
-  const epinioLinux = 'epinio-linux-x86_64';
-  const epinioWin = 'epinio-windows-amd64.exe';
 
   // Get epinio releases versions and filter the version by tag, e.g: v0.3.6
   const epinioTagsPayload = await curl('https://api.github.com/repos/epinio/epinio/releases', '--fail', '--silent');
@@ -184,7 +184,7 @@ export async function downloadEpinioBinary( platformType: string) {
 export async function downloadEpinioCommand(version: string, platform: string, folder: string) {
   const epinioUrl = 'https://github.com/epinio/epinio/releases/download/';
 
-  if (!os.platform().startsWith('win32')) {
+  if (!os.platform().startsWith('win')) {
     await curl('--fail', '--location', `${ epinioUrl }${ version }/${ platform }`, '--output', `${ folder }\/epinio`);
     const stat = fs.statSync(`${ folder }\/epinio`).mode;
 
