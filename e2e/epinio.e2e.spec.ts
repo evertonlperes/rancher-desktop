@@ -13,7 +13,6 @@ let page: Page;
 
 test.describe.serial('Epinio Install Test', () => {
   // Disabling this test for linux and windows - See https://github.com/rancher-sandbox/rancher-desktop/issues/1634
-  console.log('Platform detected:', os.platform());
   test.skip(os.platform().startsWith('linux') || os.platform().startsWith('win'), 'Need further investigation on Linux runner');
   let electronApp: ElectronApplication;
   let context: BrowserContext;
