@@ -31,7 +31,7 @@ task:
     - groupadd --gid $(stat -c '%g' /dev/kvm) kvm
     - useradd --create-home --groups kvm ranchertest
     - tar c --owner=ranchertest . | tar x --directory=/home/ranchertest
-    - chown -R ranchertest:ranchertest /home/ranchertest
+    - chown -R ranchertest:ranchertest /home/ranchertest/.
 
   install_deps_script: |
     apt-get update
