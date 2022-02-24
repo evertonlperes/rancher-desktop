@@ -18,10 +18,4 @@ jobs:
         go-version: '1.18.0-rc1'
     - run: npm ci
     - run: npm run lint:nofix
-    - run: npm run test:coverage
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        flag-name: "frontend"
-        path-to-lcov: ./coverage/lcov.info
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - run: npm run test

@@ -1,0 +1,31 @@
+on: ["push", "pull_request"]
+
+name: Test Coveralls
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '16.x'
+    - uses: actions/setup-go@v2
+      with:
+        stable: 'false' # Remove once RC suffix is removed
+        go-version: '1.18.0-rc1'
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run Coverage
+      run: npm run test:coverage
+
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        flag-name: "test-flag"
+        path-to-lcov: ./coverage/lcov.info
+        github-token: ${{ secrets.GITHUB_TOKEN }}
