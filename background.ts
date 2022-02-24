@@ -37,6 +37,7 @@ let gone = false; // when true indicates app is shutting down
 let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
+let enabledK8s: boolean;
 
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
@@ -207,6 +208,8 @@ async function startK8sManager() {
   const changedContainerEngine = currentContainerEngine !== cfg.kubernetes.containerEngine;
 
   currentContainerEngine = cfg.kubernetes.containerEngine;
+  enabledK8s = cfg.kubernetes.enabled;
+
   if (changedContainerEngine) {
     setupImageProcessor();
   }
@@ -362,7 +365,7 @@ Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
 });
 
-async function doK8sReset(arg: 'fast' | 'wipe' | 'changeEngines'): Promise<void> {
+async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart'): Promise<void> {
   // If not in a place to restart than skip it
   if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
     console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
@@ -375,7 +378,7 @@ async function doK8sReset(arg: 'fast' | 'wipe' | 'changeEngines'): Promise<void>
     case 'fast':
       await k8smanager.reset(cfg.kubernetes);
       break;
-    case 'changeEngines':
+    case 'fullRestart':
       await k8smanager.stop();
       console.log(`Stopped Kubernetes backend cleanly.`);
       await startK8sManager();
@@ -410,8 +413,8 @@ Electron.ipcMain.on('k8s-restart', async() => {
   if (cfg.kubernetes.port !== k8smanager.desiredPort) {
     // On port change, we need to wipe the VM.
     return doK8sReset('wipe');
-  } else if (cfg.kubernetes.containerEngine !== currentContainerEngine) {
-    return doK8sReset('changeEngines');
+  } else if (cfg.kubernetes.containerEngine !== currentContainerEngine || cfg.kubernetes.enabled !== enabledK8s) {
+    return doK8sReset('fullRestart');
   }
   try {
     switch (k8smanager.state) {
@@ -460,6 +463,7 @@ Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
   if (!k8smanager) {
     return;
   }
+  writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
   const currentState = await k8smanager.listIntegrations();
 
   if (!(name in currentState) || currentState[name] === newState) {
@@ -473,6 +477,7 @@ Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
 
     return;
   }
+  cfg.kubernetes.WSLIntegrations[name] = newState;
   const error = await k8smanager.setIntegration(name, newState);
 
   if (error) {
@@ -576,46 +581,58 @@ async function getVersion() {
 }
 
 /**
- * assume sync activities aren't going to be costly for a UI app.
+ * Manages the state of integration symlinks.
  * @param name -- basename of the resource to link
- * @param state -- true to symlink, false to delete
+ * @param desiredPresent -- true to symlink, false to delete
  */
-async function linkResource(name: string, state: boolean): Promise<Error | null> {
+async function linkResource(name: string, desiredPresent: boolean): Promise<void> {
   const linkPath = path.join(paths.integration, name);
 
-  let err: Error | null = await new Promise((resolve) => {
-    fs.mkdir(paths.integration, { recursive: true }, resolve);
-  });
-
-  if (err) {
-    console.error(`Error creating the directory ${ paths.integration }: ${ err.message }`);
-
-    return err;
+  try {
+    await fs.promises.mkdir(paths.integration, { recursive: true });
+  } catch (error: any) {
+    console.error(`Error creating integrations directory ${ paths.integration }: ${ error.message }`);
   }
 
-  if (state) {
-    err = await new Promise((resolve) => {
-      fs.symlink(resources.executable(name), linkPath, 'file', resolve);
-    });
-
-    if (err) {
-      console.error(`Error creating symlink for ${ linkPath }: ${ err.message }`);
-
-      return err;
+  if (desiredPresent) {
+    try {
+      await fs.promises.symlink(resources.executable(name), linkPath);
+    } catch (error: any) {
+      console.warn(`Failed to create symlink ${ linkPath }: ${ error.message }`);
     }
-  } else {
-    err = await new Promise((resolve) => {
-      fs.unlink(linkPath, resolve);
-    });
-
-    if (err) {
-      console.error(`Error unlinking symlink for ${ linkPath }: ${ err.message }`);
-
-      return err;
+  } else if (await isManagedIntegration(linkPath)) {
+    try {
+      await fs.promises.unlink(linkPath);
+    } catch (error: any) {
+      if (error.code !== 'ENOENT') {
+        console.error(`Error unlinking symlink ${ linkPath }: ${ error.message }`);
+      }
     }
   }
+}
 
-  return null;
+/**
+ * Tests whether a path is an integration symlink that is safe to delete.
+ * Can only return true when running RD as an AppImage.
+ * @param pathToCheck -- absolute path to the filesystem node that we want to check
+ * for being an integration symlink
+ */
+async function isManagedIntegration(pathToCheck: string): Promise<boolean> {
+  if (!process.env['APPIMAGE']) {
+    return false;
+  }
+
+  let linkedTo: string;
+
+  try {
+    linkedTo = await fs.promises.readlink(pathToCheck);
+  } catch (error: any) {
+    console.warn(`Error getting info about node ${ pathToCheck }: ${ error.message }`);
+
+    return false;
+  }
+
+  return linkedTo === resources.executable(path.basename(pathToCheck));
 }
 
 async function showErrorDialog(title: string, message: string, fatal?: boolean): Promise<void> {

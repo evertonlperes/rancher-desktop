@@ -43,11 +43,6 @@ provision:
   script: |
     #!/bin/sh
     hostname lima-rancher-desktop
-- # Create host.rancher-desktop.internal, lima-rancher-desktop, and host.docker.internal aliases for host.lima.internal
-  mode: system
-  script: |
-    #!/bin/sh
-    sed -i 's/host.lima.internal.*/host.lima.internal lima-rancher-desktop host.rancher-desktop.internal host.docker.internal/' /etc/hosts
 - # Clean up filesystems
   mode: system
   script: |
@@ -84,4 +79,5 @@ provision:
     usermod --append --groups docker "${LIMA_CIDATA_USER}"
 portForwards:
 - guestPortRange: [1, 65535]
+  guestIPMustBeZero: true
   hostIP: "0.0.0.0"

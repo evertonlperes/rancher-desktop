@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -39,14 +41,37 @@ func spawn(opts spawnOptions) error {
 
 var workdir string
 
+// Get the WSL mount point; typically, this is /mnt/wsl.
+func getWSLMountPoint() (string, error) {
+	buf, err := ioutil.ReadFile("/proc/self/mountinfo")
+	if err != nil {
+		return "", fmt.Errorf("error reading mounts: %w", err)
+	}
+	for _, line := range strings.Split(string(buf), "\n") {
+		if !strings.Contains(line, " - tmpfs ") {
+			// Skip the line if the filesystem type isn't "tmpfs"
+			continue
+		}
+		fields := strings.Split(line, " ")
+		if len(fields) >= 5 {
+			return fields[4], nil
+		}
+	}
+	return "", fmt.Errorf("could not find WSL mount root")
+}
+
 // function prepareParseArgs should be called before argument parsing to set up
 // the system for arg parsing.
 func prepareParseArgs() error {
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("Got unexpected euid %v", os.Geteuid())
 	}
-	rundir := "/mnt/wsl/rancher-desktop/run/"
-	err := os.MkdirAll(rundir, 0755)
+	mountPoint, err := getWSLMountPoint()
+	if err != nil {
+		return err
+	}
+	rundir := path.Join(mountPoint, "rancher-desktop/run/")
+	err = os.MkdirAll(rundir, 0755)
 	if err != nil {
 		return err
 	}
@@ -89,6 +114,34 @@ func cleanupParseArgs() error {
 	return nil
 }
 
+// doBindMount does the meat of the bind mounting.  Given a path, it makes a
+// mount inside workdir and returns the mounted path.
+func doBindMount(sourcePath string) (string, error) {
+	info, err := os.Stat(sourcePath)
+	if err != nil {
+		return "", fmt.Errorf("could not stat %s: %w", sourcePath, err)
+	}
+	var result string
+	if info.IsDir() {
+		result, err = os.MkdirTemp(workdir, "input.*")
+		if err != nil {
+			return "", err
+		}
+	} else {
+		resultFile, err := os.CreateTemp(workdir, "input.*")
+		if err != nil {
+			return "", err
+		}
+		resultFile.Close()
+		result = resultFile.Name()
+	}
+	err = unix.Mount(sourcePath, result, "none", unix.MS_BIND|unix.MS_REC, "")
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
 // volumeArgHandler handles the argument for `nerdctl run --volume=...`
 func volumeArgHandler(arg string) (string, []cleanupFunc, error) {
 	// args is of format [host:]container[:ro|:rw]
@@ -109,38 +162,56 @@ func volumeArgHandler(arg string) (string, []cleanupFunc, error) {
 		containerPath = arg[colonIndex+1:]
 	}
 
-	mountDir, err := os.MkdirTemp(workdir, "mount.*")
-	if err != nil {
-		return "", nil, err
-	}
-	err = unix.Mount(hostPath, mountDir, "none", unix.MS_BIND|unix.MS_REC, "")
+	mountDir, err := doBindMount(hostPath)
 	if err != nil {
 		return "", nil, err
 	}
 	return mountDir + ":" + containerPath + readWrite, nil, nil
 }
 
+// mountArgHandler handles the argument for `nerdctl run --mount=...`
+func mountArgHandler(arg string) (string, []cleanupFunc, error) {
+	var chunks [][]string
+	isBind := false
+	for _, chunk := range strings.Split(arg, ",") {
+		parts := strings.SplitN(chunk, "=", 2)
+		if len(parts) != 2 {
+			// Got something with no value, e.g. --mount=...,readonly,...
+			chunks = append(chunks, []string{chunk})
+			continue
+		}
+		if parts[0] == "type" && parts[1] == "bind" {
+			isBind = true
+		}
+		chunks = append(chunks, parts)
+	}
+	if !isBind {
+		// Not a bind mount; don't attempt to fix anything
+		return arg, nil, nil
+	}
+	for _, chunk := range chunks {
+		if len(chunk) != 2 {
+			continue
+		}
+		if chunk[0] != "source" && chunk[0] != "src" {
+			continue
+		}
+		mountDir, err := doBindMount(chunk[1])
+		if err != nil {
+			return "", nil, err
+		}
+		chunk[1] = mountDir
+	}
+	result := ""
+	for _, chunk := range chunks {
+		result = fmt.Sprintf("%s,%s", result, strings.Join(chunk, "="))
+	}
+	return result[1:], nil, nil // Skip the initial "," we added
+}
+
 // filePathArgHandler handles arguments that take a file path for input
 func filePathArgHandler(arg string) (string, []cleanupFunc, error) {
-	info, err := os.Stat(arg)
-	if err != nil {
-		return "", nil, fmt.Errorf("could not stat %s: %w", arg, err)
-	}
-	var result string
-	if info.IsDir() {
-		result, err = os.MkdirTemp(workdir, "input.*")
-		if err != nil {
-			return "", nil, err
-		}
-	} else {
-		resultFile, err := os.CreateTemp(workdir, "input.*")
-		if err != nil {
-			return "", nil, err
-		}
-		resultFile.Close()
-		result = resultFile.Name()
-	}
-	err = unix.Mount(arg, result, "none", unix.MS_BIND|unix.MS_REC, "")
+	result, err := doBindMount(arg)
 	if err != nil {
 		return "", nil, err
 	}

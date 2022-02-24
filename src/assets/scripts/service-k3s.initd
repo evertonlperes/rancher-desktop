@@ -25,14 +25,20 @@ ENGINE="${ENGINE:-containerd}"
 depend() {
   after network-online
   want cgroups
-  if [ "${ENGINE}" == "moby" ]; then
-    need docker
-  fi
 }
 
 start_pre() {
   rm -f /tmp/k3s.*
   checkpath --file --mode 0644 --owner root "${output_log_unquoted}" "${error_log_unquoted}"
+  ARCH=amd64
+  if [ "$(uname -m)" = "aarch64" ]; then
+    ARCH=arm64
+  fi
+  if [ "${ENGINE}" == "moby" ]; then
+    docker load --input /var/lib/rancher/k3s/agent/images/k3s-airgap-images-${ARCH}.tar
+  else
+    nerdctl --address /run/k3s/containerd/containerd.sock --namespace k8s.io load --input /var/lib/rancher/k3s/agent/images/k3s-airgap-images-${ARCH}.tar
+  fi
 }
 
 supervisor=supervise-daemon
@@ -41,6 +47,8 @@ command=/usr/local/bin/k3s
 command_args="server --https-listen-port ${PORT} ${ADDITIONAL_ARGS:-}"
 if [ "${ENGINE}" == "moby" ]; then
   command_args="${command_args} --docker"
+elif [ "${ENGINE}" == "containerd" ]; then
+  command_args="${command_args} --container-runtime-endpoint /run/k3s/containerd/containerd.sock"
 fi
 command_args="${command_args} ${K3S_EXEC:-}"
 K3S_LOGFILE="${K3S_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
