@@ -4,7 +4,7 @@ name: Test Coveralls
 
 jobs:
   coverage:
-    name: Build
+    name: coverage
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
