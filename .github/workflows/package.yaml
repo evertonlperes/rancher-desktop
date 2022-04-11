@@ -177,7 +177,7 @@ jobs:
         stable: 'false' # Remove once RC suffix is removed
         go-version: '1.18.0-rc1'
     - run: npm ci
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       if: startsWith(matrix.os, 'windows-')
       with:
         name: Rancher Desktop-win.zip
